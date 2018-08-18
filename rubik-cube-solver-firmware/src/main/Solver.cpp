@@ -1,15 +1,18 @@
 #include <Arduino.h>
-#include "stepper/Stepper.h"
+#include "cube/Cube.h"
 
-Stepper moto_a(8, 9, 400, 60);
-int m = 4;
+Stepper push_stepper(8, 9, 6400, 30);
+Stepper rotate_stepper(10, 11, 6400, 30);
+Cube *cube;
 int direction = -1;
 void setup() {
     Serial.begin(115200);
+    push_stepper.runDegree(5);
+    cube = new Cube(&push_stepper, &rotate_stepper);
 }
 
 void loop() {
-    direction = -direction;
-    moto_a.run(direction * 40 * m);
     delay(3000);
+    cube->x();
+    //push_stepper.run(51200);
 }

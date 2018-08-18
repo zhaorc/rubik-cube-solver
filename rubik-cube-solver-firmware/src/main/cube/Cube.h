@@ -9,14 +9,8 @@
 
 class Cube {
 public:
-    /// Constructor
-    /// \param[in] pushStepperStepPin push stepper的控制转动Arduino pin
-    /// \param[in] pushStepperDirPin  push stepper的控制方向Arduino pin
-    /// \param[in] rotateStepperStepPin rotate stepper的控制转动Arduino pin
-    /// \param[in] rotateStepperDirPin rotate stepper的控制方向Arduino pin
-    /// \param[in] stepperSteps 电机转一周的步数
-    /// \param[in] stepperSpeed 电机的转速,RPM
-    Cube(int pushStepperStepPin, int pushStepperDirPin, int rotateStepperStepPin, int rotateStepperDirPin, int stepperSteps, int stepperSpeed);
+
+    Cube(Stepper *pushStepper, Stepper *rotateStepper);
 
     /// 整体做1次R方向的90度转动,x
     void x();
@@ -75,9 +69,9 @@ public:
 
 private:
     /// stepper to push the cube
-    Stepper *_pushStepper;
+    Stepper* _pushStepper;
     /// stepper to rotate the cube
-    Stepper *_rotateStepper;
+    Stepper* _rotateStepper;
     /// start position of push, in steps
     int _pushPositionStart = 0;
     /// end position of push, in steps
@@ -98,12 +92,11 @@ private:
     ////
     void sleep();
 
-    typedef enum {
-        PUSH_START = 0, // 起始位置
-        PUSH_END = 0,   // 结束位置
-        PUSH_HOLD = 0,   // 抓握位置
-        ROTATE_FIX = 0  // 转动角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度
-    };
+    const float PUSH_START = 0; // 起始位置
+    const float PUSH_HOLD = 50;   // 抓握位置
+//    const float PUSH_END = 77.4293;   // 结束位置
+    const float PUSH_END = 90;   // 结束位置
+    const float ROTATE_FIX = 0;  // 转动角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度
     ///
     const int SLEEPTIME = 10;
 };

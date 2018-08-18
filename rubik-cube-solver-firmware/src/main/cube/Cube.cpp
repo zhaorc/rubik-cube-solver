@@ -7,13 +7,16 @@
 
 #include<Arduino.h>
 #include "Cube.h"
+#include "../stepper/Stepper.h"
 
-Cube::Cube(int pushStepperStepPin, int pushStepperDirPin, int rotateStepperStepPin, int rotateStepperDirPin, int stepperSteps, int stepperSpeed) {
-    this->_pushStepper = &Stepper(pushStepperStepPin, pushStepperDirPin, stepperSteps, stepperSpeed);
-    this->_rotateStepper = &Stepper(rotateStepperStepPin, rotateStepperDirPin, stepperSteps, stepperSpeed);
+Cube::Cube(Stepper *pushStepper, Stepper *rotateStepper) {
+    this->_pushStepper = pushStepper;
+    this->_rotateStepper = rotateStepper;
+    this->degreeToPosition();
 }
 
 void Cube::x() {
+
     this->_pushStepper->runTo(this->_pushPositionEnd);
     this->sleep();
     this->_pushStepper->runTo(this->_pushPositionStart);
@@ -183,9 +186,9 @@ void Cube::B_() {
 
 void Cube::degreeToPosition() {
     int steps = this->_pushStepper->getSteps();
-    this->_pushPositionEnd = (steps * ((float) this->PUSH_END / 360.0));
+    this->_pushPositionStart = this->_pushStepper->getPosition();
     this->_pushPositionHold = (steps * ((float) this->PUSH_HOLD / 360.0));
-    //this->_rotatePosition = (steps / 4);
+    this->_pushPositionEnd = (steps * ((float) this->PUSH_END / 360.0));
 }
 
 void Cube::hold() {
