@@ -61,7 +61,7 @@ public:
     void R_();
 
     /// 前面顺时针转90度
-    void FF(); //F is used by arduino
+    void FF(); // F used by arduino
     /// 前面转180度
     void FF2();
     /// 前面逆时针转90度
@@ -84,8 +84,6 @@ private:
     int _pushPositionEnd = 0;
     /// hold position, in steps
     int _pushPositionHold = 0;
-    /// 转90度的步数
-    int _rotatePosition = 0;
 
     /// 将角度位置转换为步数
     void degreeToPosition();
@@ -101,10 +99,11 @@ private:
     void sleep();
 
     typedef enum {
-        START = 0, // 起始位置
-        END = 0,   // 结束位置
-        HOLD = 0,   // 抓握位置
-    } _pushPositionInDegree;
+        PUSH_START = 0, // 起始位置
+        PUSH_END = 0,   // 结束位置
+        PUSH_HOLD = 0,   // 抓握位置
+        ROTATE_FIX = 0  // 转动角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度
+    };
     ///
     const int SLEEPTIME = 10;
 };

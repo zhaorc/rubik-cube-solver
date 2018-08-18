@@ -183,9 +183,9 @@ void Cube::B_() {
 
 void Cube::degreeToPosition() {
     int steps = this->_pushStepper->getSteps();
-    this->_pushPositionEnd = (steps * ((float) this->END / 360.0));
-    this->_pushPositionHold = (steps * ((float) this->HOLD / 360.0));
-    this->_rotatePosition = (steps / 4);
+    this->_pushPositionEnd = (steps * ((float) this->PUSH_END / 360.0));
+    this->_pushPositionHold = (steps * ((float) this->PUSH_HOLD / 360.0));
+    //this->_rotatePosition = (steps / 4);
 }
 
 void Cube::hold() {
@@ -198,7 +198,10 @@ void Cube::release() {
 
 void Cube::rotate(int degree) {
     long steps = this->_rotateStepper->getSteps();
-    this->_rotateStepper->run(steps * ((float) degree / 360.0));
+    int fix = degree > 0 ? this->ROTATE_FIX : -this->ROTATE_FIX;
+    this->_rotateStepper->run(steps * ((float) (degree + fix) / 360.0));
+    this->sleep();
+    this->_rotateStepper->run(steps * ((float) (-fix) / 360.0));
 }
 
 void Cube::sleep() {
