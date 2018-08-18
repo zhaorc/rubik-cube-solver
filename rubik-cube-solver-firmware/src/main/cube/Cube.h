@@ -65,6 +65,11 @@ public:
     void B2();
     void B_();
 
+    /// hold
+    void hold();
+    /// release
+    void release();
+
     virtual ~Cube();
 
 private:
@@ -81,10 +86,6 @@ private:
 
     /// 将角度位置转换为步数
     void degreeToPosition();
-    /// hold
-    void hold();
-    /// release
-    void release();
     /// 转动
     /// \param[in] degree 转动的度数,顺时针为正/逆时针为负
     void rotate(int degree);
@@ -93,7 +94,7 @@ private:
     void sleep();
 
     const float PUSH_START = 0; // 起始位置
-    const float PUSH_HOLD = 50;   // 抓握位置
+    const float PUSH_HOLD = 35;   // 抓握位置
 //    const float PUSH_END = 77.4293;   // 结束位置
     const float PUSH_END = 90;   // 结束位置
     const float ROTATE_FIX = 0;  // 转动角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度

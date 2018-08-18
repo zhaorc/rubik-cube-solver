@@ -13,6 +13,8 @@ void setup() {
 
 void loop() {
     delay(3000);
-    cube->x();
-    //push_stepper.run(51200);
+    cube->x3();
+//    cube->hold();
+//    delay(3000);
+//    cube->release();
 }
