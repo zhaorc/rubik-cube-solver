@@ -10,8 +10,9 @@
 Stepper::Stepper(int stepPin, int dirPin, int steps, int speed) {
     this->_stepPin = stepPin;
     this->_dirPin = dirPin;
-    this->_interval = 30000000L / (long) speed;
+    this->_steps = steps;
     this->_speed = speed;
+    this->_interval = 30000000L / (long) speed;
     pinMode(this->_stepPin, OUTPUT);
     pinMode(this->_dirPin, OUTPUT);
 
@@ -25,6 +26,10 @@ Stepper::Stepper(int stepPin, int dirPin, int steps, int speed) {
 
 unsigned long Stepper::getPosition() {
     return this->_position;
+}
+
+int Stepper::getSteps() {
+    return this->_steps;
 }
 
 void Stepper::run(long steps) {
@@ -49,6 +54,10 @@ void Stepper::run(long steps) {
         delayMicroseconds(this->_interval);
     }
     this->_position += steps;
+}
+
+void Stepper::runTo(unsigned long position) {
+    this->run(position - this->_position);
 }
 
 Stepper::~Stepper() {
