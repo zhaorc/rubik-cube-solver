@@ -16,10 +16,10 @@ Cube::Cube(Stepper *pushStepper, Stepper *rotateStepper) {
 }
 
 void Cube::x() {
-
     this->_pushStepper->runTo(this->_pushPositionEnd);
     this->sleep();
     this->_pushStepper->runTo(this->_pushPositionStart);
+    this->sleep();
 }
 
 void Cube::x2() {
@@ -30,6 +30,7 @@ void Cube::x2() {
     this->_pushStepper->runTo(this->_pushPositionEnd);
     this->sleep();
     this->_pushStepper->runTo(this->_pushPositionStart);
+    this->sleep();
 }
 
 void Cube::x3() {
@@ -44,6 +45,7 @@ void Cube::x3() {
     this->_pushStepper->runTo(this->_pushPositionEnd);
     this->sleep();
     this->_pushStepper->runTo(this->_pushPositionStart);
+    this->sleep();
 }
 
 void Cube::y() {
@@ -77,7 +79,7 @@ void Cube::U_() {
 
 void Cube::D() {
     this->hold();
-    this->rotate(-90);
+    this->rotate(90);
     this->release();
 }
 void Cube::D2() {
@@ -87,68 +89,68 @@ void Cube::D2() {
 }
 void Cube::D_() {
     this->hold();
-    this->rotate(90);
+    this->rotate(-90);
     this->release();
 }
 
 void Cube::L() {
-    this->rotate(90);
+    this->rotate(-90);
     this->x();
     this->hold();
     this->rotate(90);
     this->x3();
-    this->rotate(-90);
+    this->rotate(90);
 }
 
 void Cube::L2() {
-    this->rotate(90);
+    this->rotate(-90);
     this->x();
     this->hold();
     this->rotate(180);
     this->x3();
-    this->rotate(-90);
+    this->rotate(90);
 }
 
 void Cube::L_() {
-    this->rotate(90);
+    this->rotate(-90);
     this->x();
     this->hold();
     this->rotate(-90);
     this->x3();
-    this->rotate(-90);
+    this->rotate(90);
 }
 
 void Cube::R() {
-    this->rotate(-90);
+    this->rotate(90);
     this->x();
     this->hold();
-    this->rotate(-90);
-    this->x3();
     this->rotate(90);
+    this->x3();
+    this->rotate(-90);
 }
 
 void Cube::R2() {
-    this->rotate(-90);
+    this->rotate(90);
     this->x();
     this->hold();
     this->rotate(180);
     this->x3();
-    this->rotate(90);
+    this->rotate(-90);
 }
 
 void Cube::R_() {
-    this->rotate(-90);
+    this->rotate(90);
     this->x();
     this->hold();
-    this->rotate(90);
+    this->rotate(-90);
     this->x3();
-    this->rotate(90);
+    this->rotate(-90);
 }
 
 void Cube::FF() {
     this->x3();
     this->hold();
-    this->rotate(-90);
+    this->rotate(90);
     this->x();
 }
 void Cube::FF2() {
@@ -161,7 +163,7 @@ void Cube::FF2() {
 void Cube::FF_() {
     this->x3();
     this->hold();
-    this->rotate(90);
+    this->rotate(-90);
     this->x();
 }
 
@@ -193,18 +195,29 @@ void Cube::degreeToPosition() {
 
 void Cube::hold() {
     this->_pushStepper->runTo(this->_pushPositionHold);
+    this->sleep();
+    this->_isHold = true;
 }
 
 void Cube::release() {
     this->_pushStepper->runTo(this->_pushPositionStart);
+    this->sleep();
+    this->_isHold = false;
 }
 
 void Cube::rotate(int degree) {
     long steps = this->_rotateStepper->getSteps();
-    int fix = degree > 0 ? this->ROTATE_FIX : -this->ROTATE_FIX;
-    this->_rotateStepper->run(steps * ((float) (degree + fix) / 360.0));
-    this->sleep();
-    this->_rotateStepper->run(steps * ((float) (-fix) / 360.0));
+    if (this->_isHold) {
+        int fix = degree > 0 ? this->ROTATE_FIX : -this->ROTATE_FIX;
+        this->_rotateStepper->run(steps * ((float) (degree + fix) / 360.0) * (1 + this->ROTATE_ADD_PERCENT));
+        this->sleep();
+        this->_rotateStepper->run(steps * ((float) (-fix) / 360.0));
+        this->sleep();
+    } else {
+        this->_rotateStepper->run(steps * ((float) (degree) / 360.0) * (1 + this->ROTATE_ADD_PERCENT));
+        this->sleep();
+    }
+    this->_isHold = false;
 }
 
 void Cube::sleep() {
