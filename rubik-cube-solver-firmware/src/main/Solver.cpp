@@ -36,7 +36,6 @@ void loop() {
         cube->release();
         break;
     }
-    delay(3000);
 }
 
 void readFormula() {
@@ -73,12 +72,15 @@ void solveCube() {
     case 'U':
         switch (c2) {
         case '2':
+            Serial.println("U2");
             cube->U2();
             break;
         case '\'':
+            Serial.println("U'");
             cube->U_();
             break;
         default:
+            Serial.println("U");
             cube->U();
             buf_ptr--;
         }
@@ -86,12 +88,15 @@ void solveCube() {
     case 'D':
         switch (c2) {
         case '2':
+            Serial.println("D2");
             cube->D2();
             break;
         case '\'':
+            Serial.println("D'");
             cube->D_();
             break;
         default:
+            Serial.println("D");
             cube->D();
             buf_ptr--;
         }
@@ -99,12 +104,15 @@ void solveCube() {
     case 'L':
         switch (c2) {
         case '2':
+            Serial.println("L2");
             cube->L2();
             break;
         case '\'':
+            Serial.println("L'");
             cube->L_();
             break;
         default:
+            Serial.println("L");
             cube->L();
             buf_ptr--;
         }
@@ -112,12 +120,15 @@ void solveCube() {
     case 'R':
         switch (c2) {
         case '2':
+            Serial.println("R2");
             cube->R2();
             break;
         case '\'':
+            Serial.println("R'");
             cube->R_();
             break;
         default:
+            Serial.println("R");
             cube->R();
             buf_ptr--;
         }
@@ -125,12 +136,15 @@ void solveCube() {
     case 'F':
         switch (c2) {
         case '2':
+            Serial.println("F2");
             cube->FF2();
             break;
         case '\'':
+            Serial.println("F'");
             cube->FF_();
             break;
         default:
+            Serial.println("F");
             cube->FF();
             buf_ptr--;
         }
@@ -138,12 +152,15 @@ void solveCube() {
     case 'B':
         switch (c2) {
         case '2':
+            Serial.println("B2");
             cube->B2();
             break;
         case '\'':
+            Serial.println("B'");
             cube->B_();
             break;
         default:
+            Serial.println("B");
             cube->B();
             buf_ptr--;
         }

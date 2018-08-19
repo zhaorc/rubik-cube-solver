@@ -211,12 +211,14 @@ void Cube::rotate(int degree) {
         int fix = degree > 0 ? this->ROTATE_FIX : -this->ROTATE_FIX;
         this->_rotateStepper->run(steps * ((float) (degree + fix) / 360.0) * (1 + this->ROTATE_ADD_PERCENT));
         this->sleep();
-        this->_rotateStepper->run(steps * ((float) (-fix) / 360.0));
+        //this->release();
+        this->_rotateStepper->run(steps * ((float) (-fix * 1.06) / 360.0));
         this->sleep();
     } else {
         this->_rotateStepper->run(steps * ((float) (degree) / 360.0) * (1 + this->ROTATE_ADD_PERCENT));
         this->sleep();
     }
+    this->sleep();
     this->_isHold = false;
 }
 
