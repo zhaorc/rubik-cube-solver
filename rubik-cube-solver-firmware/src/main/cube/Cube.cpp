@@ -61,7 +61,7 @@ void Cube::y_() {
 void Cube::U() {
     this->x2();
     this->hold();
-    this->rotate(-90);
+    this->rotate(90);
     this->x2();
 }
 void Cube::U2() {
@@ -73,7 +73,7 @@ void Cube::U2() {
 void Cube::U_() {
     this->x2();
     this->hold();
-    this->rotate(90);
+    this->rotate(-90);
     this->x2();
 }
 
