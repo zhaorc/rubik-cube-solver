@@ -8,7 +8,7 @@
 Stepper push_stepper(8, 9, 6400, 30);
 Stepper rotate_stepper(10, 11, 6400, 60);
 Cube *cube;
-char buf[121];
+char buf[61];
 char* buf_ptr;
 int state = 0;
 
@@ -18,9 +18,11 @@ void solveCube();
 void setup() {
     delay(3000);
     Serial.begin(115200);
-    //push_stepper.runDegree(2);
     cube = new Cube(&push_stepper, &rotate_stepper);
+//    push_stepper.runDegree(5);
     delay(1000);
+    cube->hold();
+    cube->release();
     state = STATE_READ_FORMULA;
 }
 
@@ -34,6 +36,7 @@ void loop() {
         break;
     case STATE_SOLVE_FINISH:
         cube->release();
+        state = STATE_READ_FORMULA;
         break;
     }
 }
@@ -61,10 +64,6 @@ void readFormula() {
 void solveCube() {
     char c1 = *buf_ptr++;
     char c2 = *buf_ptr++;
-    Serial.print("c1=");
-    Serial.println(c1);
-    Serial.print("c2=");
-    Serial.println(c2);
     switch (c1) {
     case '\0':
         state = STATE_SOLVE_FINISH;
