@@ -27,13 +27,6 @@ int Stepper::getPosition() {
 }
 
 void Stepper::run(long steps) {
-//    Serial.print("speed=");
-//    Serial.println(this->_speed);
-//    Serial.print("interval=");
-//    Serial.println(this->_interval);
-//    Serial.print("steps=");
-//    Serial.println(steps);
-
     if (!steps) {
         return;
     }
