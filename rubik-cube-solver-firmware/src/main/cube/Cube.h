@@ -95,12 +95,11 @@ private:
     bool _isHold = false;
     const float PUSH_START = 0; // 起始位置
     const float PUSH_HOLD = 33; //35;   // 抓握位置
-//    const float PUSH_END = 77.4293;   // 结束位置
-    const float PUSH_END = 93; //90  // 结束位置
-    const float ROTATE_FIX = 10;  // 转动角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度
-    const float ROTATE_ADD_PERCENT = 0.006;
-    ///
+    const float PUSH_END = 87; //90  // 结束位置
+    const float ROTATE_FIX_CLOCKWISE = 10;  // 顺时针转动,角度的修正值.由于底座挡板与魔方之间有间隙,需引入修正值修正转动的角度
+    const float ROTATE_FIX_COUNTERCLOCKWISE = 12; //逆时针转动,角度的修正值
     const int SLEEPTIME = 200;
+    const int SLEEPPAUSE = 100;
 };
 
 #endif /* SRC_MAIN_CUBE_CUBE_H_ */
