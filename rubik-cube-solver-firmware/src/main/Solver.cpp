@@ -12,7 +12,7 @@ char buf[61];
 char* buf_ptr;
 int state = 0;
 
-void readFormula();
+void readMoves();
 void solveCube();
 
 void setup() {
@@ -29,7 +29,7 @@ void setup() {
 void loop() {
     switch (state) {
     case STATE_READ_FORMULA:
-        readFormula();
+        readMoves();
         break;
     case STATE_SOLVE:
         solveCube();
