@@ -24,12 +24,21 @@ import tthcc.rubikcube.solver.camera.ProcessingThread;
 
 public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Callback {
     private final String TAG = PhotoActivity.class.getSimpleName();
-    private static final int MSG_FACE_U = 1;
+
+    private String[] faceletString = new String[6];
+    //index is RubikFacelet.Color
+    private static final String[] FACENAME = new String[]{
+            "F", "B", "U", "R", "L", "D"
+    };
+
+    //URLDFB is the kociemba's twophase algorithm's face sequence
+    private static final int MSG_FACE_U = 0;
+    private static final int MSG_FACE_R = 1;
     private static final int MSG_FACE_F = 2;
     private static final int MSG_FACE_D = 3;
-    private static final int MSG_FACE_B = 4;
-    private static final int MSG_FACE_L = 5;
-    private static final int MSG_FACE_R = 6;
+    private static final int MSG_FACE_L = 4;
+    private static final int MSG_FACE_B = 5;
+
     private static final int DefaultPreviewWidth = 1440;
     private static final int DefaultPreviewHeight = 1080;
     private SurfaceHolder surfaceHolder;
@@ -48,8 +57,6 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         layoutParams.width = width;
         linearLayout.setLayoutParams(layoutParams);
 
-        this.createHandler();
-
         this.findViewById(R.id.face_U).setOnClickListener(this.imageViewClickListener);
         this.findViewById(R.id.face_F).setOnClickListener(this.imageViewClickListener);
         this.findViewById(R.id.face_D).setOnClickListener(this.imageViewClickListener);
@@ -57,8 +64,13 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         this.findViewById(R.id.face_L).setOnClickListener(this.imageViewClickListener);
         this.findViewById(R.id.face_R).setOnClickListener(this.imageViewClickListener);
 
+        for(int i=0; i<faceletString.length; i++) {
+            faceletString[i] = "";
+        }
+
         this.surfaceHolder = ((SurfaceView)this.findViewById(R.id.camera_surface_view)).getHolder();
         this.surfaceHolder.addCallback(this);
+        this.createHandler();
         this.processingThread = new ProcessingThread(ProcessingThread.class.getSimpleName(), this.surfaceHolder, this.handler, this.DefaultPreviewWidth, this.DefaultPreviewHeight);
         this.processingThread.start();
     }
@@ -136,27 +148,27 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
                 switch(msg.what) {
                     case PhotoActivity.MSG_FACE_U:
                         imageView = findViewById(R.id.face_U);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_F:
                         imageView = findViewById(R.id.face_F);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_D:
                         imageView = findViewById(R.id.face_D);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_B:
                         imageView = findViewById(R.id.face_B);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_L:
                         imageView = findViewById(R.id.face_L);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_R:
                         imageView = findViewById(R.id.face_R);
-                        handleDetectResult((DetectResult)(msg.obj), imageView);
+                        handleDetectResult(msg, imageView);
                         break;
                     default:
                         super.handleMessage(msg);
@@ -167,10 +179,11 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
 
     /**
      *
-     * @param detectResult
+     * @param msg
      * @param imageView
      */
-    private void handleDetectResult(DetectResult detectResult, ImageView imageView) {
+    private void handleDetectResult(Message msg, ImageView imageView) {
+        DetectResult detectResult = (DetectResult)msg.obj;
         Bitmap photoBitmap = detectResult.getFaceBitmap();
         // 旋转90度
         Matrix m = new Matrix();
@@ -192,6 +205,13 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         actualFacelets[2][0] = facelets[2][2];
         actualFacelets[2][1] = facelets[1][2];
         actualFacelets[2][2] = facelets[0][2];
+
+        int faceIndex = msg.what;
+        for(int i=0; i<3; i++) {
+            for(int j=0; j<3; j++) {
+                this.faceletString[faceIndex] += FACENAME[actualFacelets[i][j].color];
+            }
+        }
 
 //        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
 //        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
