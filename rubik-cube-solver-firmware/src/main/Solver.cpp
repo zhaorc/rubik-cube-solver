@@ -41,7 +41,7 @@ void loop() {
     }
 }
 
-void readFormula() {
+void readMoves() {
     char buf[121];
     int data = 0;
     int read_length = 0;
