@@ -221,10 +221,17 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         Log.d(TAG, "processing thread inside cleanup sync area, cleanup performed, after sync area.");
     }
 
+    /**
+     *
+     */
     private void detectFace() {
         this.faceDetacted = false;
     }
 
+    /**
+     *
+     * @param data
+     */
     private void renderFrameInternal(byte[] data) {
         if(this.faceDetacted) {
             return;

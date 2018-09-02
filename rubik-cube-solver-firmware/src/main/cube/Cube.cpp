@@ -33,7 +33,7 @@ void Cube::x2() {
     this->sleep();
 }
 
-void Cube::x3() {
+void Cube::x_() {
     this->_pushStepper->runTo(this->_pushPositionEnd);
     this->sleep();
     this->_pushStepper->runTo(this->_pushPositionHold);
@@ -98,7 +98,7 @@ void Cube::L() {
     this->x();
     this->hold();
     this->rotate(90);
-    this->x3();
+    this->x_();
     this->rotate(90);
 }
 
@@ -107,7 +107,7 @@ void Cube::L2() {
     this->x();
     this->hold();
     this->rotate(180);
-    this->x3();
+    this->x_();
     this->rotate(90);
 }
 
@@ -116,7 +116,7 @@ void Cube::L_() {
     this->x();
     this->hold();
     this->rotate(-90);
-    this->x3();
+    this->x_();
     this->rotate(90);
 }
 
@@ -125,7 +125,7 @@ void Cube::R() {
     this->x();
     this->hold();
     this->rotate(90);
-    this->x3();
+    this->x_();
     this->rotate(-90);
 }
 
@@ -134,7 +134,7 @@ void Cube::R2() {
     this->x();
     this->hold();
     this->rotate(180);
-    this->x3();
+    this->x_();
     this->rotate(-90);
 }
 
@@ -143,25 +143,25 @@ void Cube::R_() {
     this->x();
     this->hold();
     this->rotate(-90);
-    this->x3();
+    this->x_();
     this->rotate(-90);
 }
 
 void Cube::FF() {
-    this->x3();
+    this->x_();
     this->hold();
     this->rotate(90);
     this->x();
 }
 void Cube::FF2() {
-    this->x3();
+    this->x_();
     this->hold();
     this->rotate(180);
     this->x();
 }
 
 void Cube::FF_() {
-    this->x3();
+    this->x_();
     this->hold();
     this->rotate(-90);
     this->x();
@@ -171,19 +171,19 @@ void Cube::B() {
     this->x();
     this->hold();
     this->rotate(90);
-    this->x3();
+    this->x_();
 }
 void Cube::B2() {
     this->x();
     this->hold();
     this->rotate(180);
-    this->x3();
+    this->x_();
 }
 void Cube::B_() {
     this->x();
     this->hold();
     this->rotate(-90);
-    this->x3();
+    this->x_();
 }
 
 void Cube::degreeToPosition() {
