@@ -8,7 +8,6 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceHolder;
-import android.widget.ImageView;
 
 import com.catalinjurjiu.rubikdetector.RubikDetector;
 import com.catalinjurjiu.rubikdetector.RubikDetectorUtils;
@@ -16,6 +15,9 @@ import com.catalinjurjiu.rubikdetector.config.DrawConfig;
 import com.catalinjurjiu.rubikdetector.model.RubikFacelet;
 
 import java.nio.ByteBuffer;
+
+import tthcc.rubikcube.solver.PhotoActivity;
+import tthcc.rubikcube.solver.bluetooth.BluetoothUtil;
 
 public class ProcessingThread extends HandlerThread implements Camera.PreviewCallback {
 
@@ -26,7 +28,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     private static final int MSG_OPEN_CAMERA = 1;
     private static final int MSG_START_CAMERA = 2;
     private static final int MSG_CLEANUP = 3;
-    private static final int MSG_DETECT_FACE = 4;
+    private static final int MSG_DETECT_FACE_OR_SOLVE = 4;
 
     private int cameraPreviewWidth;
     private int cameraPreviewHeight;
@@ -35,12 +37,29 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     private SurfaceHolder surfaceHolder;
     private Handler backgroundHandler;
     private Handler frontendHandler;
-    private int frontendMessageId;
     private Camera camera;
 
     private RubikDetector rubikDetector;
 
     private final Object cleanupLock = new Object();
+    private static final int[] FaceSequance = new int[] {
+            PhotoActivity.MSG_FACE_U,
+            PhotoActivity.MSG_FACE_F,
+            PhotoActivity.MSG_FACE_D,
+            PhotoActivity.MSG_FACE_B,
+            PhotoActivity.MSG_FACE_L,
+            PhotoActivity.MSG_FACE_R
+    };
+    private static final String[] RubikTurnfaceSequance = new String[] {
+            "",
+            "x2",
+            "x",
+            "x",
+            "y'x",
+            "x",
+            "xyx",
+    };
+    private int currentFace = -1;
     private boolean faceDetacted = true;
 
 
@@ -55,6 +74,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.frontendHandler = frontendHandler;
         this.cameraPreviewWidth = cameraPreviewWidth;
         this.cameraPreviewHeight = cameraPreviewHeight;
+        BluetoothUtil.getInstance().setProcessingThread(this);
     }
 
     /**
@@ -78,9 +98,8 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.backgroundHandler.sendEmptyMessage(ProcessingThread.MSG_CLEANUP);
     }
 
-    public void performDetectFace(int frontendMessageId) {
-        this.frontendMessageId = frontendMessageId;
-        this.backgroundHandler.sendEmptyMessage(ProcessingThread.MSG_DETECT_FACE);
+    public void performDetectFaceOrSolve() {
+        this.backgroundHandler.sendEmptyMessage(ProcessingThread.MSG_DETECT_FACE_OR_SOLVE);
     }
 
     @Override
@@ -99,8 +118,8 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                     case MSG_CLEANUP:
                         cleanup();
                         break;
-                    case MSG_DETECT_FACE:
-                        detectFace();
+                    case MSG_DETECT_FACE_OR_SOLVE:
+                        detectFaceOrSolve();
                         break;
                 }
             }
@@ -224,8 +243,15 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     /**
      *
      */
-    private void detectFace() {
-        this.faceDetacted = false;
+    private void detectFaceOrSolve() {
+        this.currentFace = this.getNextFace();
+        if(this.currentFace != -1) {
+            this.faceDetacted = false;
+        }
+        else {
+            //TODO
+            //solve
+        }
     }
 
     /**
@@ -250,10 +276,10 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 DetectResult detectResult = new DetectResult();
                 detectResult.setFaceBitmap(photoBitmap);
                 detectResult.setFacelets(facelets);
-                Message resultMessage = this.frontendHandler.obtainMessage(this.frontendMessageId, detectResult);
+                Message resultMessage = this.frontendHandler.obtainMessage(this.currentFace, detectResult);
                 resultMessage.sendToTarget();
-
                 this.faceDetacted = true;
+                this.rubikTurnToNextFace();
             }
             catch(Exception exp) {
                 Log.e(TAG, exp.getMessage(), exp);
@@ -261,20 +287,37 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         }
     }
 
-//    private Camera.Size findHighResValidPreviewSize(final Camera camera) {
-//        int minWidthDiff = 100000;
-//        Camera.Size desiredWidth = camera.new Size(cthis.ameraPreviewWidth, cameraPreviewHeight);
-//        for (Camera.Size size : this.validPreviewFormatSizes) {
-//            int diff = cameraPreviewWidth - size.width;
-//
-//            if (Math.abs(diff) < minWidthDiff) {
-//                minWidthDiff = Math.abs(diff);
-//                desiredWidth = size;
-//            }
-//        }
-//        return desiredWidth;
-//    }
+    /**
+     *
+     */
+    private void rubikTurnToNextFace() {
+        int nextFace = this.getNextFace();
+        if(nextFace == -1) {
+            BluetoothUtil.getInstance().sendMessage(ProcessingThread.RubikTurnfaceSequance[ProcessingThread.RubikTurnfaceSequance.length-1]);
+        }
+        else {
+            BluetoothUtil.getInstance().sendMessage(ProcessingThread.RubikTurnfaceSequance[nextFace]);
+        }
+    }
 
+    /**
+     *
+     * @return
+     */
+    private int getNextFace() {
+        if(this.currentFace == -1) {
+            return ProcessingThread.FaceSequance[0];
+        }
+        if(this.currentFace == ProcessingThread.FaceSequance[ProcessingThread.FaceSequance.length -1]) {
+            return -1;
+        }
+        for(int i=0; i<ProcessingThread.FaceSequance.length-1; i++) {
+           if(ProcessingThread.FaceSequance[i] == this.currentFace) {
+               return ProcessingThread.FaceSequance[i+1];
+           }
+       }
+       return -1;
+    }
 
     /**
      *

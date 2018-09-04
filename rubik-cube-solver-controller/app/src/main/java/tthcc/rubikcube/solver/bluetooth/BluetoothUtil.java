@@ -3,22 +3,21 @@ package tthcc.rubikcube.solver.bluetooth;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.os.Handler;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
-import tthcc.rubikcube.solver.PhotoActivity;
+import tthcc.rubikcube.solver.camera.ProcessingThread;
+
 
 public class BluetoothUtil {
     private String TAG = BluetoothUtil.class.getSimpleName();
     private static BluetoothUtil instance;
     private BluetoothSocket socket;
-    private Handler photoActivityHandler;
+    private ProcessingThread processingThread;
     private BluetoothUtil() {
     }
 
@@ -35,11 +34,19 @@ public class BluetoothUtil {
 
     /**
      *
-     * @param photoActivityHandler
+     * @param processingThread
      */
-    public void setPhotoActivityHandler(Handler photoActivityHandler) {
-        this.photoActivityHandler = photoActivityHandler;
+    public void setProcessingThread(ProcessingThread processingThread) {
+        this.processingThread = processingThread;
     }
+
+//    /**
+//     *
+//     * @param photoActivityHandler
+//     */
+//    public void setPhotoActivityHandler(Handler photoActivityHandler) {
+//        this.photoActivityHandler = photoActivityHandler;
+//    }
 
     /**
      *
@@ -100,26 +107,17 @@ public class BluetoothUtil {
      * @param message
      */
     public void sendMessage(String message) {
+        int size = message.length();
+        String data = String.format("%04d%s", size, message);
         //XXX
-        Log.i(TAG, "sendMessage=" + message);
-        OutputStream outs = null;
+        Log.i(TAG, "sendMessage=" + data);
         try {
-            outs = this.socket.getOutputStream();
-            outs.write((message + "\r\n").getBytes());
+            OutputStream outs = this.socket.getOutputStream();
+            outs.write((data).getBytes());
             outs.flush();
         }
         catch(Exception exp) {
             Log.i(TAG, exp.getMessage(), exp);
-        }
-        finally {
-            try {
-                if(outs != null) {
-                    outs.close();
-                }
-            }
-            catch(Exception exp) {
-
-            }
         }
     }
 
@@ -130,17 +128,21 @@ public class BluetoothUtil {
         new Thread(new Runnable(){
             @Override
             public void run() {
-                BufferedReader reader = null;
                 try {
-                    reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    String response;
+                    InputStream ins = socket.getInputStream();
+                    byte[] data = new byte[32];
+                    int iread = 0;
                     while(true) {
-                        response = reader.readLine();
-                        if(response != null) {
+                        if(!socket.isConnected() || ins == null) {
+                            break;
+                        }
+                        if(ins.available() >= 4) {
+                            iread = ins.read(data, 0, data.length);
+                            String response = new String(data, 0, iread);
                             //XXX
                             Log.i(TAG, "response=" + response);
-                            if(response.equals("DONE\r\n")) {
-                                photoActivityHandler.sendEmptyMessage(PhotoActivity.MSG_FACE_READY);
+                            if(response.equals("DONE")) {
+                                processingThread.performDetectFaceOrSolve();
                             }
                         }
                         Thread.sleep(10);
@@ -148,15 +150,6 @@ public class BluetoothUtil {
                 }
                 catch(Exception exp) {
                     Log.e(TAG, exp.getMessage(), exp);
-                }
-                finally {
-                    try {
-                        if(reader != null) {
-                            reader.close();
-                        }
-                    }
-                    catch(Exception exp) {
-                    }
                 }
             }
         }).start();

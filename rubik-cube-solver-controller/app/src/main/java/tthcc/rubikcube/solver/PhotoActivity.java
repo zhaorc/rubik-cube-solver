@@ -1,7 +1,5 @@
 package tthcc.rubikcube.solver;
 
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -15,12 +13,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.catalinjurjiu.rubikdetector.model.RubikFacelet;
-
-import org.kociemba.twophase.Search;
-import org.kociemba.twophase.Tools;
-
-import tthcc.rubikcube.solver.bluetooth.BluetoothUtil;
 import tthcc.rubikcube.solver.camera.DetectResult;
 import tthcc.rubikcube.solver.camera.ProcessingThread;
 
@@ -36,12 +28,12 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     };
 
     //URLDFB is the kociemba's twophase algorithm's face sequence
-    private static final int MSG_FACE_U = 0;
-    private static final int MSG_FACE_R = 1;
-    private static final int MSG_FACE_F = 2;
-    private static final int MSG_FACE_D = 3;
-    private static final int MSG_FACE_L = 4;
-    private static final int MSG_FACE_B = 5;
+    public static final int MSG_FACE_U = 0;
+    public static final int MSG_FACE_R = 1;
+    public static final int MSG_FACE_F = 2;
+    public static final int MSG_FACE_D = 3;
+    public static final int MSG_FACE_L = 4;
+    public static final int MSG_FACE_B = 5;
     public static final int MSG_FACE_READY = 6;
 
     private static final int DefaultPreviewWidth = 1440;
@@ -49,7 +41,7 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     private SurfaceHolder surfaceHolder;
     private ProcessingThread processingThread;
     private Handler handler;
-    private int currentFace;
+//    private int currentFace = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -77,7 +69,6 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         this.surfaceHolder = ((SurfaceView)this.findViewById(R.id.camera_surface_view)).getHolder();
         this.surfaceHolder.addCallback(this);
         this.createHandler();
-        BluetoothUtil.getInstance().setPhotoActivityHandler(this.handler);
         this.processingThread = new ProcessingThread(ProcessingThread.class.getSimpleName(), this.surfaceHolder, this.handler, this.DefaultPreviewWidth, this.DefaultPreviewHeight);
         this.processingThread.start();
     }
@@ -126,7 +117,7 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
 //                    messageId = PhotoActivity.MSG_FACE_R;
 //                    break;
 //            }
-//            processingThread.performDetectFace(messageId);
+//            processingThread.performDetectFaceOrSolve(messageId);
 //        }
 //    };
 
@@ -145,8 +136,8 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         }
         catch(Exception exp){
         }
-        this.currentFace = PhotoActivity.MSG_FACE_U;
-        this.processingThread.performDetectFace(this.currentFace);
+//        this.currentFace = PhotoActivity.MSG_FACE_U;
+        this.processingThread.performDetectFaceOrSolve();
     }
 
     @Override
@@ -161,64 +152,73 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         this.handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                ImageView imageView;
+//                ImageView imageView;
+                //XXX
+                Log.i(TAG, "msg.what=" + msg.what);
                 switch(msg.what) {
                     case PhotoActivity.MSG_FACE_U:
-                        imageView = findViewById(R.id.face_U);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_U)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_U);
+//                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_F:
-                        imageView = findViewById(R.id.face_F);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_F)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_F);
+//                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_D:
-                        imageView = findViewById(R.id.face_D);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_D)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_D);
+//                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_B:
-                        imageView = findViewById(R.id.face_B);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_B)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_B);
+//                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_L:
-                        imageView = findViewById(R.id.face_L);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_L)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_L);
+//                        handleDetectResult(msg, imageView);
                         break;
                     case PhotoActivity.MSG_FACE_R:
-                        imageView = findViewById(R.id.face_R);
-                        handleDetectResult(msg, imageView);
+                        ((ImageView)findViewById(R.id.face_R)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
+//                        imageView = findViewById(R.id.face_R);
+//                        handleDetectResult(msg, imageView);
                         break;
-                    case PhotoActivity.MSG_FACE_READY:
-                        if(currentFace == PhotoActivity.MSG_FACE_U) {
-                            currentFace = PhotoActivity.MSG_FACE_F;
-                            processingThread.performDetectFace(currentFace);
-                        }
-                        else if(currentFace == PhotoActivity.MSG_FACE_F) {
-                            currentFace = PhotoActivity.MSG_FACE_D;
-                            processingThread.performDetectFace(currentFace);
-                        }
-                        else if(currentFace == PhotoActivity.MSG_FACE_D) {
-                            currentFace = PhotoActivity.MSG_FACE_B;
-                            processingThread.performDetectFace(currentFace);
-                        }
-                        else if(currentFace == PhotoActivity.MSG_FACE_B) {
-                            currentFace = PhotoActivity.MSG_FACE_L;
-                            processingThread.performDetectFace(currentFace);
-                        }
-                        else if(currentFace == PhotoActivity.MSG_FACE_L) {
-                            currentFace = PhotoActivity.MSG_FACE_R;
-                            processingThread.performDetectFace(currentFace);
-                        }
-                        else if(currentFace == PhotoActivity.MSG_FACE_R) {
-                            currentFace = -1;
-                            String moves = computeMoves();
-                            BluetoothUtil.getInstance().sendMessage(moves);
-                        }
-                        else if(currentFace == -1) {
-                            //Solved
-                            //TODO
-                            Log.i(TAG, "+++++++ SOLVED +++++++");
-                        }
-                        break;
+//                    case PhotoActivity.MSG_FACE_READY:
+//                        if(currentFace == PhotoActivity.MSG_FACE_U) {
+//                            currentFace = PhotoActivity.MSG_FACE_F;
+//                            processingThread.performDetectFaceOrSolve(currentFace);
+//                        }
+//                        else if(currentFace == PhotoActivity.MSG_FACE_F) {
+//                            currentFace = PhotoActivity.MSG_FACE_D;
+//                            processingThread.performDetectFaceOrSolve(currentFace);
+//                        }
+//                        else if(currentFace == PhotoActivity.MSG_FACE_D) {
+//                            currentFace = PhotoActivity.MSG_FACE_B;
+//                            processingThread.performDetectFaceOrSolve(currentFace);
+//                        }
+//                        else if(currentFace == PhotoActivity.MSG_FACE_B) {
+//                            currentFace = PhotoActivity.MSG_FACE_L;
+//                            processingThread.performDetectFaceOrSolve(currentFace);
+//                        }
+//                        else if(currentFace == PhotoActivity.MSG_FACE_L) {
+//                            currentFace = PhotoActivity.MSG_FACE_R;
+//                            processingThread.performDetectFaceOrSolve(currentFace);
+//                        }
+//                        else if(currentFace == PhotoActivity.MSG_FACE_R) {
+//                            //TODO
+////                            currentFace = -1;
+////                            String moves = computeMoves();
+////                            BluetoothUtil.getInstance().sendMessage(moves);
+//                        }
+//                        else if(currentFace == -1) {
+//                            //Solved
+//                            //TODO
+//                            Log.i(TAG, "+++++++ SOLVED +++++++");
+//                        }
+//                        break;
                     default:
                         super.handleMessage(msg);
                 }
@@ -226,86 +226,86 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         };
     }
 
-    /**
-     *
-     * @param msg
-     * @param imageView
-     */
-    private void handleDetectResult(Message msg, ImageView imageView) {
-        DetectResult detectResult = (DetectResult)msg.obj;
-        Bitmap photoBitmap = detectResult.getFaceBitmap();
-        // 旋转90度
-        Matrix m = new Matrix();
-        m.setRotate(90, (float) photoBitmap.getWidth(), (float) photoBitmap.getHeight());
-        photoBitmap = Bitmap.createBitmap(photoBitmap, 0, 0, photoBitmap.getWidth(), photoBitmap.getHeight(), m, true);
-        imageView.setImageBitmap(photoBitmap);
-
-        RubikFacelet[][] facelets = detectResult.getFacelets();
-        RubikFacelet[][] actualFacelets = new RubikFacelet[3][3];
-
-        actualFacelets[0][0] = facelets[2][0];
-        actualFacelets[0][1] = facelets[1][0];
-        actualFacelets[0][2] = facelets[0][0];
-
-        actualFacelets[1][0] = facelets[2][1];
-        actualFacelets[1][1] = facelets[1][1];
-        actualFacelets[1][2] = facelets[0][1];
-
-        actualFacelets[2][0] = facelets[2][2];
-        actualFacelets[2][1] = facelets[1][2];
-        actualFacelets[2][2] = facelets[0][2];
-
-        int faceIndex = msg.what;
-        for(int i=0; i<3; i++) {
-            for(int j=0; j<3; j++) {
-                this.faceletStrings[faceIndex] += FACENAME[actualFacelets[i][j].color];
-            }
-        }
-
-        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
-        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
-        Log.i(TAG,">>>> " + actualFacelets[2][0].color + " " + actualFacelets[2][1].color + " " + actualFacelets[2][2].color);
-
-        switch(msg.what) {
-            case PhotoActivity.MSG_FACE_U:
-                BluetoothUtil.getInstance().sendMessage("x");
-                break;
-            case PhotoActivity.MSG_FACE_F:
-                BluetoothUtil.getInstance().sendMessage("x");
-                break;
-            case PhotoActivity.MSG_FACE_D:
-                BluetoothUtil.getInstance().sendMessage("x");
-                break;
-            case PhotoActivity.MSG_FACE_B:
-                BluetoothUtil.getInstance().sendMessage("y'x");
-                break;
-            case PhotoActivity.MSG_FACE_L:
-                BluetoothUtil.getInstance().sendMessage("x2");
-                break;
-            case PhotoActivity.MSG_FACE_R:
-                BluetoothUtil.getInstance().sendMessage("xy'x");
-                break;
-        }
-    }
-
-    /**
-     *
-     * @return
-     */
-    private String computeMoves() {
-        String faceletString = "";
-        for(String str : faceletStrings) {
-            faceletString += str;
-        }
-        int code = Tools.verify(faceletString);
-        //XXX
-        Log.i(TAG, "verify code=" + code);
-        if(code == 0) {
-            String moves = Search.solution(faceletString, 21, 5, false);
-            //XXX
-            Log.i(TAG, "moves=" + moves);
-            return moves;
-        }
-        return null;
-    }
+//    /**
+//     *
+//     * @param msg
+//     * @param imageView
+//     */
+//    private void handleDetectResult(Message msg, ImageView imageView) {
+//        DetectResult detectResult = (DetectResult)msg.obj;
+//        Bitmap photoBitmap = detectResult.getFaceBitmap();
+//        // 旋转90度
+//        Matrix m = new Matrix();
+//        m.setRotate(90, (float) photoBitmap.getWidth(), (float) photoBitmap.getHeight());
+//        photoBitmap = Bitmap.createBitmap(photoBitmap, 0, 0, photoBitmap.getWidth(), photoBitmap.getHeight(), m, true);
+//        imageView.setImageBitmap(photoBitmap);
+//
+//        RubikFacelet[][] facelets = detectResult.getFacelets();
+//        RubikFacelet[][] actualFacelets = new RubikFacelet[3][3];
+//
+//        actualFacelets[0][0] = facelets[2][0];
+//        actualFacelets[0][1] = facelets[1][0];
+//        actualFacelets[0][2] = facelets[0][0];
+//
+//        actualFacelets[1][0] = facelets[2][1];
+//        actualFacelets[1][1] = facelets[1][1];
+//        actualFacelets[1][2] = facelets[0][1];
+//
+//        actualFacelets[2][0] = facelets[2][2];
+//        actualFacelets[2][1] = facelets[1][2];
+//        actualFacelets[2][2] = facelets[0][2];
+//
+//        int faceIndex = msg.what;
+//        for(int i=0; i<3; i++) {
+//            for(int j=0; j<3; j++) {
+//                this.faceletStrings[faceIndex] += FACENAME[actualFacelets[i][j].color];
+//            }
+//        }
+//
+//        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
+//        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
+//        Log.i(TAG,">>>> " + actualFacelets[2][0].color + " " + actualFacelets[2][1].color + " " + actualFacelets[2][2].color);
+//
+//        switch(msg.what) {
+//            case PhotoActivity.MSG_FACE_U:
+//                BluetoothUtil.getInstance().sendMessage("x");
+//                break;
+//            case PhotoActivity.MSG_FACE_F:
+//                BluetoothUtil.getInstance().sendMessage("x");
+//                break;
+//            case PhotoActivity.MSG_FACE_D:
+//                BluetoothUtil.getInstance().sendMessage("x");
+//                break;
+//            case PhotoActivity.MSG_FACE_B:
+//                BluetoothUtil.getInstance().sendMessage("y'x");
+//                break;
+//            case PhotoActivity.MSG_FACE_L:
+//                BluetoothUtil.getInstance().sendMessage("x2");
+//                break;
+//            case PhotoActivity.MSG_FACE_R:
+//                BluetoothUtil.getInstance().sendMessage("xy'x");
+//                break;
+//        }
+//    }
+//
+//    /**
+//     *
+//     * @return
+//     */
+//    private String computeMoves() {
+//        String faceletString = "";
+//        for(String str : faceletStrings) {
+//            faceletString += str;
+//        }
+//        int code = Tools.verify(faceletString);
+//        //XXX
+//        Log.i(TAG, "verify code=" + code);
+//        if(code == 0) {
+//            String moves = Search.solution(faceletString, 21, 5, false);
+//            //XXX
+//            Log.i(TAG, "moves=" + moves);
+//            return moves;
+//        }
+//        return null;
+//    }
 }
