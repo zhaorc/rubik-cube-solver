@@ -1,5 +1,8 @@
 package tthcc.rubikcube.solver;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -7,13 +10,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import tthcc.rubikcube.solver.camera.DetectResult;
 import tthcc.rubikcube.solver.camera.ProcessingThread;
 
 
@@ -22,10 +28,6 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     private final String TAG = PhotoActivity.class.getSimpleName();
 
     private String[] faceletStrings = new String[6];
-    //index is RubikFacelet.Color
-    private static final String[] FACENAME = new String[]{
-            "F", "B", "U", "R", "L", "D"
-    };
 
     //URLDFB is the kociemba's twophase algorithm's face sequence
     public static final int MSG_FACE_U = 0;
@@ -34,14 +36,19 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     public static final int MSG_FACE_D = 3;
     public static final int MSG_FACE_L = 4;
     public static final int MSG_FACE_B = 5;
-    public static final int MSG_FACE_READY = 6;
+    public static final int MSG_FACE_DETECT_FAIL = 6;
+    public static final int MSG_FACE_DETECT_SUCESS = 7;
+    public static final int MSG_SHOW_STOPWATCH = 8;
+    public static final int MSG_STOP_WATCH = 9;
 
     private static final int DefaultPreviewWidth = 1440;
     private static final int DefaultPreviewHeight = 1080;
     private SurfaceHolder surfaceHolder;
     private ProcessingThread processingThread;
     private Handler handler;
-//    private int currentFace = 0;
+    private TextView movesTextView;
+    private TextView stopwatchTextView;
+    private Stopwatch stopwatch = new Stopwatch();
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -55,16 +62,10 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         layoutParams.width = width;
         linearLayout.setLayoutParams(layoutParams);
 
-//        this.findViewById(R.id.face_U).setOnClickListener(this.imageViewClickListener);
-//        this.findViewById(R.id.face_F).setOnClickListener(this.imageViewClickListener);
-//        this.findViewById(R.id.face_D).setOnClickListener(this.imageViewClickListener);
-//        this.findViewById(R.id.face_B).setOnClickListener(this.imageViewClickListener);
-//        this.findViewById(R.id.face_L).setOnClickListener(this.imageViewClickListener);
-//        this.findViewById(R.id.face_R).setOnClickListener(this.imageViewClickListener);
-
         for(int i = 0; i< faceletStrings.length; i++) {
             this.faceletStrings[i] = "";
         }
+        this.createTextViewOverlay();
 
         this.surfaceHolder = ((SurfaceView)this.findViewById(R.id.camera_surface_view)).getHolder();
         this.surfaceHolder.addCallback(this);
@@ -93,41 +94,20 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         super.onDestroy();
     }
 
-//    private View.OnClickListener imageViewClickListener = new View.OnClickListener(){
-//        @Override
-//        public void onClick(View view) {
-//            int messageId = 0;
-//            switch(view.getId()) {
-//                case R.id.face_U:
-//                    messageId = PhotoActivity.MSG_FACE_U;
-//                    break;
-//                case R.id.face_F:
-//                    messageId = PhotoActivity.MSG_FACE_F;
-//                    break;
-//                case R.id.face_D:
-//                    messageId = PhotoActivity.MSG_FACE_D;
-//                    break;
-//                case R.id.face_B:
-//                    messageId = PhotoActivity.MSG_FACE_B;
-//                    break;
-//                case R.id.face_L:
-//                    messageId = PhotoActivity.MSG_FACE_L;
-//                    break;
-//                case R.id.face_R:
-//                    messageId = PhotoActivity.MSG_FACE_R;
-//                    break;
-//            }
-//            processingThread.performDetectFaceOrSolve(messageId);
-//        }
-//    };
-
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+        if(this.movesTextView != null) {
+            this.movesTextView.setText("");
+            this.movesTextView.setVisibility(View.INVISIBLE);
+        }
+        if(this.stopwatchTextView != null) {
+            this.stopwatchTextView.setText("");
+            this.stopwatchTextView.setVisibility(View.INVISIBLE);
+        }
         this.processingThread.performOpenCamera();
         this.processingThread.performStartCamera();
         //
@@ -136,7 +116,6 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         }
         catch(Exception exp){
         }
-//        this.currentFace = PhotoActivity.MSG_FACE_U;
         this.processingThread.performDetectFaceOrSolve();
     }
 
@@ -152,73 +131,37 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         this.handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
-//                ImageView imageView;
-                //XXX
-                Log.i(TAG, "msg.what=" + msg.what);
                 switch(msg.what) {
                     case PhotoActivity.MSG_FACE_U:
-                        ((ImageView)findViewById(R.id.face_U)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_U);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_U), (Bitmap)msg.obj, 90);
                         break;
                     case PhotoActivity.MSG_FACE_F:
-                        ((ImageView)findViewById(R.id.face_F)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_F);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_F), (Bitmap)msg.obj, 90);
                         break;
                     case PhotoActivity.MSG_FACE_D:
-                        ((ImageView)findViewById(R.id.face_D)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_D);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_D), (Bitmap)msg.obj, 90);
                         break;
                     case PhotoActivity.MSG_FACE_B:
-                        ((ImageView)findViewById(R.id.face_B)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_B);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_B), (Bitmap)msg.obj,-90);
                         break;
                     case PhotoActivity.MSG_FACE_L:
-                        ((ImageView)findViewById(R.id.face_L)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_L);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_L), (Bitmap)msg.obj,0);
                         break;
                     case PhotoActivity.MSG_FACE_R:
-                        ((ImageView)findViewById(R.id.face_R)).setImageBitmap(((DetectResult)msg.obj).getFaceBitmap());
-//                        imageView = findViewById(R.id.face_R);
-//                        handleDetectResult(msg, imageView);
+                        showFacePicture((ImageView)findViewById(R.id.face_R), (Bitmap)msg.obj,0);
                         break;
-//                    case PhotoActivity.MSG_FACE_READY:
-//                        if(currentFace == PhotoActivity.MSG_FACE_U) {
-//                            currentFace = PhotoActivity.MSG_FACE_F;
-//                            processingThread.performDetectFaceOrSolve(currentFace);
-//                        }
-//                        else if(currentFace == PhotoActivity.MSG_FACE_F) {
-//                            currentFace = PhotoActivity.MSG_FACE_D;
-//                            processingThread.performDetectFaceOrSolve(currentFace);
-//                        }
-//                        else if(currentFace == PhotoActivity.MSG_FACE_D) {
-//                            currentFace = PhotoActivity.MSG_FACE_B;
-//                            processingThread.performDetectFaceOrSolve(currentFace);
-//                        }
-//                        else if(currentFace == PhotoActivity.MSG_FACE_B) {
-//                            currentFace = PhotoActivity.MSG_FACE_L;
-//                            processingThread.performDetectFaceOrSolve(currentFace);
-//                        }
-//                        else if(currentFace == PhotoActivity.MSG_FACE_L) {
-//                            currentFace = PhotoActivity.MSG_FACE_R;
-//                            processingThread.performDetectFaceOrSolve(currentFace);
-//                        }
-//                        else if(currentFace == PhotoActivity.MSG_FACE_R) {
-//                            //TODO
-////                            currentFace = -1;
-////                            String moves = computeMoves();
-////                            BluetoothUtil.getInstance().sendMessage(moves);
-//                        }
-//                        else if(currentFace == -1) {
-//                            //Solved
-//                            //TODO
-//                            Log.i(TAG, "+++++++ SOLVED +++++++");
-//                        }
-//                        break;
+                    case PhotoActivity.MSG_FACE_DETECT_FAIL:
+                        showMessageOnScreen((String)msg.obj);
+                        break;
+                    case PhotoActivity.MSG_FACE_DETECT_SUCESS:
+                        showMovesOnScreenAndStartStopwatch((String)msg.obj);
+                        break;
+                    case PhotoActivity.MSG_SHOW_STOPWATCH:
+                        showStopwatch((String)msg.obj);
+                        break;
+                    case PhotoActivity.MSG_STOP_WATCH:
+                        stopwatch.stopWatch();
+                        break;
                     default:
                         super.handleMessage(msg);
                 }
@@ -226,86 +169,120 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         };
     }
 
+    /**
+     * @param imageView
+     * @param bitmap
+     * @param  rotateDegree
+     */
+    private void showFacePicture(ImageView imageView, Bitmap bitmap, int rotateDegree) {
+        // 旋转90度
+        if(rotateDegree != 0) {
+            Matrix m = new Matrix();
+            m.setRotate(rotateDegree, (float) bitmap.getWidth(), (float) bitmap.getHeight());
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
+        }
+        imageView.setImageBitmap(bitmap);
+    }
+
+    /**
+     *
+     */
+    private void createTextViewOverlay() {
+        //用来显示moves的TextView
+        this.movesTextView = new TextView(this.getApplicationContext());
+        this.movesTextView.setVisibility(View.INVISIBLE);
+        this.movesTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        this.movesTextView.setTextColor(Color.WHITE);
+        this.movesTextView.setTextSize(20);
+        FrameLayout.LayoutParams movesTvLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        movesTvLayoutParams.gravity = Gravity.TOP;
+        movesTvLayoutParams.topMargin = 50;
+        movesTvLayoutParams.leftMargin = 50;
+        movesTvLayoutParams.rightMargin = 50;
+        this.addContentView(this.movesTextView, movesTvLayoutParams);
+
+        this.stopwatchTextView = new TextView(this.getApplicationContext());
+        this.stopwatchTextView.setVisibility(View.INVISIBLE);
+        this.stopwatchTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        this.stopwatchTextView.setTextColor(Color.WHITE);
+        this.stopwatchTextView.setGravity(Gravity.CENTER_VERTICAL);
+        this.stopwatchTextView.setTextSize(30);
+        FrameLayout.LayoutParams stopwatchTvLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        stopwatchTvLayoutParams.gravity = Gravity.TOP;
+        stopwatchTvLayoutParams.topMargin = 300;
+        this.addContentView(this.stopwatchTextView, stopwatchTvLayoutParams);
+    }
+
+    /**
+     *
+     */
+    private void showMessageOnScreen(String message) {
+        this.movesTextView.setText(message);
+        this.movesTextView.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     *
+     */
+    private void showMovesOnScreenAndStartStopwatch(String moves) {
+        this.movesTextView.setText(moves);
+        this.movesTextView.setVisibility(View.VISIBLE);
+        //start Stopwatch
+        this.stopwatchTextView.setText("00:00.00");
+        this.stopwatchTextView.setVisibility(View.VISIBLE);
+        this.stopwatch.startWatch();
+    }
+
 //    /**
 //     *
-//     * @param msg
-//     * @param imageView
 //     */
-//    private void handleDetectResult(Message msg, ImageView imageView) {
-//        DetectResult detectResult = (DetectResult)msg.obj;
-//        Bitmap photoBitmap = detectResult.getFaceBitmap();
-//        // 旋转90度
-//        Matrix m = new Matrix();
-//        m.setRotate(90, (float) photoBitmap.getWidth(), (float) photoBitmap.getHeight());
-//        photoBitmap = Bitmap.createBitmap(photoBitmap, 0, 0, photoBitmap.getWidth(), photoBitmap.getHeight(), m, true);
-//        imageView.setImageBitmap(photoBitmap);
-//
-//        RubikFacelet[][] facelets = detectResult.getFacelets();
-//        RubikFacelet[][] actualFacelets = new RubikFacelet[3][3];
-//
-//        actualFacelets[0][0] = facelets[2][0];
-//        actualFacelets[0][1] = facelets[1][0];
-//        actualFacelets[0][2] = facelets[0][0];
-//
-//        actualFacelets[1][0] = facelets[2][1];
-//        actualFacelets[1][1] = facelets[1][1];
-//        actualFacelets[1][2] = facelets[0][1];
-//
-//        actualFacelets[2][0] = facelets[2][2];
-//        actualFacelets[2][1] = facelets[1][2];
-//        actualFacelets[2][2] = facelets[0][2];
-//
-//        int faceIndex = msg.what;
-//        for(int i=0; i<3; i++) {
-//            for(int j=0; j<3; j++) {
-//                this.faceletStrings[faceIndex] += FACENAME[actualFacelets[i][j].color];
-//            }
-//        }
-//
-//        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
-//        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
-//        Log.i(TAG,">>>> " + actualFacelets[2][0].color + " " + actualFacelets[2][1].color + " " + actualFacelets[2][2].color);
-//
-//        switch(msg.what) {
-//            case PhotoActivity.MSG_FACE_U:
-//                BluetoothUtil.getInstance().sendMessage("x");
-//                break;
-//            case PhotoActivity.MSG_FACE_F:
-//                BluetoothUtil.getInstance().sendMessage("x");
-//                break;
-//            case PhotoActivity.MSG_FACE_D:
-//                BluetoothUtil.getInstance().sendMessage("x");
-//                break;
-//            case PhotoActivity.MSG_FACE_B:
-//                BluetoothUtil.getInstance().sendMessage("y'x");
-//                break;
-//            case PhotoActivity.MSG_FACE_L:
-//                BluetoothUtil.getInstance().sendMessage("x2");
-//                break;
-//            case PhotoActivity.MSG_FACE_R:
-//                BluetoothUtil.getInstance().sendMessage("xy'x");
-//                break;
-//        }
+//    private void startStopwatch() {
 //    }
-//
-//    /**
-//     *
-//     * @return
-//     */
-//    private String computeMoves() {
-//        String faceletString = "";
-//        for(String str : faceletStrings) {
-//            faceletString += str;
-//        }
-//        int code = Tools.verify(faceletString);
-//        //XXX
-//        Log.i(TAG, "verify code=" + code);
-//        if(code == 0) {
-//            String moves = Search.solution(faceletString, 21, 5, false);
-//            //XXX
-//            Log.i(TAG, "moves=" + moves);
-//            return moves;
-//        }
-//        return null;
-//    }
+
+    /**
+     *
+     * @param timeStr
+     */
+    private void showStopwatch(String timeStr) {
+        this.stopwatchTextView.setText(timeStr);
+    }
+
+    /**
+     *
+     */
+    private class Stopwatch extends Thread {
+        private long startTimestamp = 0;
+        private boolean running = false;
+
+        /**
+         *
+         */
+        public void startWatch() {
+            this.startTimestamp = System.currentTimeMillis();
+            this.running = true;
+            this.start();
+        }
+
+        /**
+         *
+         */
+        public void stopWatch() {
+            this.running = false;
+
+        }
+        @Override
+        public void run() {
+            while(this.running) {
+                try {
+                    Thread.sleep(10);
+                    long timepassed = System.currentTimeMillis() - startTimestamp;
+                    String timeStr = String.format("%02d:%02d.%02d", (timepassed / 60000), (timepassed % 60000) / 1000, ((timepassed % 60000) % 1000) / 10);
+                    Message message = handler.obtainMessage(PhotoActivity.MSG_SHOW_STOPWATCH, timeStr);
+                    message.sendToTarget();
+                }
+                catch(Exception exp) {
+                }
+            }
+        }
+    }
 }
