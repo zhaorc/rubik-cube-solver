@@ -14,13 +14,13 @@ import com.catalinjurjiu.rubikdetector.RubikDetectorUtils;
 import com.catalinjurjiu.rubikdetector.config.DrawConfig;
 import com.catalinjurjiu.rubikdetector.model.RubikFacelet;
 
-import org.kociemba.twophase.Search;
 import org.kociemba.twophase.Tools;
 
 import java.nio.ByteBuffer;
 
 import tthcc.rubikcube.solver.PhotoActivity;
 import tthcc.rubikcube.solver.bluetooth.BluetoothUtil;
+import tthcc.rubikcube.solver.jaap.JaapsSolver;
 
 public class ProcessingThread extends HandlerThread implements Camera.PreviewCallback {
 
@@ -63,6 +63,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
             "xy'x",
     };
     private int currentFace = -1;
+    private int detectedTimes = 0;
     private boolean faceDetacted = true;
     private boolean solveInProcessing = false;
 
@@ -81,6 +82,11 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
      */
     public ProcessingThread(String name, SurfaceHolder surfaceHolder, Handler frontendHandler, int cameraPreviewWidth, int cameraPreviewHeight) {
         super(name);
+        this.currentFace = -1;
+        this.detectedTimes = 0;
+        this.faceDetacted = true;
+        this.solveInProcessing = false;
+        for(int i=0; i<this.facelets.length; i++) this.facelets[i] = "";
         this.surfaceHolder = surfaceHolder;
         this.frontendHandler = frontendHandler;
         this.cameraPreviewWidth = cameraPreviewWidth;
@@ -258,6 +264,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.currentFace = this.getNextFace();
         if(this.currentFace != -1) {
             this.faceDetacted = false;
+            this.detectedTimes = 0;
         }
         else {
             if(this.solveInProcessing) {
@@ -272,7 +279,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                     Message message = this.frontendHandler.obtainMessage(PhotoActivity.MSG_FACE_DETECT_SUCESS, moves);
                     message.sendToTarget();
                     this.solveInProcessing = true;
-                    BluetoothUtil.getInstance().sendMessage(moves);
+                    BluetoothUtil.getInstance().sendMessage(moves.replaceAll(" ", ""));
                 }
             }
         }
@@ -287,7 +294,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
             return;
         }
         RubikFacelet[][] facelets = this.rubikDetector.findCube(data);
-        if(facelets != null) {
+        if(facelets != null && this.detectedTimes++ > 10) {
             this.faceDetacted = true;
             try {
                 Bitmap photoBitmap = Bitmap.createBitmap(this.cameraPreviewWidth, this.cameraPreviewHeight, Bitmap.Config.ARGB_8888);
@@ -298,7 +305,11 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 byteBuffer.rewind();
                 photoBitmap.copyPixelsFromBuffer(byteBuffer);
                 // send to UI
-                Message resultMessage = this.frontendHandler.obtainMessage(this.currentFace, photoBitmap);
+                // rotate
+                int degree = getRotateDegree(facelets);
+                //XXX
+                Log.i(TAG, "currentFace=" + currentFace + ", rotateDegree=" + degree);
+                Message resultMessage = this.frontendHandler.obtainMessage(this.currentFace, -degree, -degree, photoBitmap);
                 resultMessage.sendToTarget();
                 this.makeupFaceletString(facelets);
                 this.rubikTurnToNextFace();
@@ -327,6 +338,9 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
      * @return
      */
     private int getNextFace() {
+        if(this.solveInProcessing) {
+            return -1;
+        }
         if(this.currentFace == -1) {
             return ProcessingThread.FaceSequance[0];
         }
@@ -361,51 +375,36 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
      * @param rubikFacelets
      */
     private void makeupFaceletString(RubikFacelet[][] rubikFacelets) {
-
-        RubikFacelet[][] actualFacelets = new RubikFacelet[3][3];
-
-        // U F D 转90度
+        int degree = this.getRotateDegree(rubikFacelets);
         if(this.currentFace == PhotoActivity.MSG_FACE_U || this.currentFace == PhotoActivity.MSG_FACE_F || this.currentFace == PhotoActivity.MSG_FACE_D) {
-            actualFacelets[0][0] = rubikFacelets[2][0];
-            actualFacelets[0][1] = rubikFacelets[1][0];
-            actualFacelets[0][2] = rubikFacelets[0][0];
-
-            actualFacelets[1][0] = rubikFacelets[2][1];
-            actualFacelets[1][1] = rubikFacelets[1][1];
-            actualFacelets[1][2] = rubikFacelets[0][1];
-
-            actualFacelets[2][0] = rubikFacelets[2][2];
-            actualFacelets[2][1] = rubikFacelets[1][2];
-            actualFacelets[2][2] = rubikFacelets[0][2];
+            //U F D 90度
+            degree = 90 - degree;
         }
         else if(this.currentFace == PhotoActivity.MSG_FACE_B) {
-            // B 转-90度
-            actualFacelets[0][0] = rubikFacelets[0][2];
-            actualFacelets[0][1] = rubikFacelets[1][2];
-            actualFacelets[0][2] = rubikFacelets[2][2];
-
-            actualFacelets[1][0] = rubikFacelets[0][1];
-            actualFacelets[1][1] = rubikFacelets[1][1];
-            actualFacelets[1][2] = rubikFacelets[2][1];
-
-            actualFacelets[2][0] = rubikFacelets[0][0];
-            actualFacelets[2][1] = rubikFacelets[1][0];
-            actualFacelets[2][2] = rubikFacelets[2][0];
+            //B -90度
+            degree = -90 - degree;
         }
         else {
             // L R 不转
-            actualFacelets[0][0] = rubikFacelets[0][0];
-            actualFacelets[0][1] = rubikFacelets[0][1];
-            actualFacelets[0][2] = rubikFacelets[0][2];
-
-            actualFacelets[1][0] = rubikFacelets[1][0];
-            actualFacelets[1][1] = rubikFacelets[1][1];
-            actualFacelets[1][2] = rubikFacelets[1][2];
-
-            actualFacelets[2][0] = rubikFacelets[2][0];
-            actualFacelets[2][1] = rubikFacelets[2][1];
-            actualFacelets[2][2] = rubikFacelets[2][2];
         }
+        if(degree == -180) {
+            degree = 180;
+        }
+        else if(degree == -270) {
+            degree = 90;
+        }
+        RubikFacelet[][] actualFacelets = this.transposition(rubikFacelets, degree);
+
+        //XXX
+        Log.i(TAG, "currentFace=" + this.currentFace);
+        Log.i(TAG, "rad=" + (rubikFacelets[0][0]).angle * 180 / Math.PI + ", degree=" + degree);
+        Log.i(TAG,">>>> " + rubikFacelets[0][0].color + " " + rubikFacelets[0][1].color + " " + rubikFacelets[0][2].color);
+        Log.i(TAG,">>>> " + rubikFacelets[1][0].color + " " + rubikFacelets[1][1].color + " " + rubikFacelets[1][2].color);
+        Log.i(TAG,">>>> " + rubikFacelets[2][0].color + " " + rubikFacelets[2][1].color + " " + rubikFacelets[2][2].color);
+        Log.i(TAG, ">>>>>");
+        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
+        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
+        Log.i(TAG,">>>> " + actualFacelets[2][0].color + " " + actualFacelets[2][1].color + " " + actualFacelets[2][2].color);
 
         for(int i=0; i<3; i++) {
             for(int j=0; j<3; j++) {
@@ -415,15 +414,87 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         //XXX
         Log.i(TAG, "facelets[" + this.currentFace + "]=" + this.facelets[this.currentFace]);
 
-        //XXX
-        Log.i(TAG, "currentFace=" + this.currentFace);
-        Log.i(TAG,">>>> " + rubikFacelets[0][0].color + " " + rubikFacelets[0][1].color + " " + rubikFacelets[0][2].color);
-        Log.i(TAG,">>>> " + rubikFacelets[1][0].color + " " + rubikFacelets[1][1].color + " " + rubikFacelets[1][2].color);
-        Log.i(TAG,">>>> " + rubikFacelets[2][0].color + " " + rubikFacelets[2][1].color + " " + rubikFacelets[2][2].color);
-        Log.i(TAG, ">>>>>");
-        Log.i(TAG,">>>> " + actualFacelets[0][0].color + " " + actualFacelets[0][1].color + " " + actualFacelets[0][2].color);
-        Log.i(TAG,">>>> " + actualFacelets[1][0].color + " " + actualFacelets[1][1].color + " " + actualFacelets[1][2].color);
-        Log.i(TAG,">>>> " + actualFacelets[2][0].color + " " + actualFacelets[2][1].color + " " + actualFacelets[2][2].color);
+    }
+
+    /**
+     *
+     * @param rubikFacelets
+     * @return
+     */
+    private int getRotateDegree(RubikFacelet[][] rubikFacelets) {
+        float angle = (float)(rubikFacelets[0][0].angle * 180 / Math.PI);
+        int degree = 0;
+        if(angle > -110 && angle < -70) {
+            degree = -90;
+        }
+        else if(angle > -20 && angle < 20) {
+            degree = 0;
+        }
+        else if(angle > 70 && angle < 110) {
+            degree = 90;
+        }
+        else if(angle > 160 && angle < 200) {
+            degree = 180;
+        }
+        return degree;
+    }
+
+    /**
+     *
+     * @param org
+     * @param degree
+     * @return
+     */
+    private RubikFacelet[][] transposition(RubikFacelet[][] org, int degree) {
+        RubikFacelet[][] dst = new RubikFacelet[3][3];
+        if(degree == -90) {
+            dst[0][0] = org[0][2];
+            dst[0][1] = org[1][2];
+            dst[0][2] = org[2][2];
+
+            dst[1][0] = org[0][1];
+            dst[1][1] = org[1][1];
+            dst[1][2] = org[2][1];
+
+            dst[2][0] = org[0][0];
+            dst[2][1] = org[1][0];
+            dst[2][2] = org[2][0];
+        }
+        else if(degree == 0) {
+            //
+            for(int i=0; i<3; i++) {
+                for(int j=0; j<3; j++) {
+                    dst[i][j] = org[i][j];
+                }
+            }
+        }
+        else if(degree == 90) {
+            dst[0][0] = org[2][0];
+            dst[0][1] = org[1][0];
+            dst[0][2] = org[0][0];
+
+            dst[1][0] = org[2][1];
+            dst[1][1] = org[1][1];
+            dst[1][2] = org[0][1];
+
+            dst[2][0] = org[2][2];
+            dst[2][1] = org[1][2];
+            dst[2][2] = org[0][2];
+        }
+        else if(degree == 180) {
+            dst[0][0] = org[2][2];
+            dst[0][1] = org[2][1];
+            dst[0][2] = org[2][0];
+
+            dst[1][0] = org[1][2];
+            dst[1][1] = org[1][1];
+            dst[1][2] = org[1][0];
+
+            dst[2][0] = org[0][2];
+            dst[2][1] = org[0][1];
+            dst[2][2] = org[0][0];
+        }
+        return dst;
     }
 
     /**
@@ -432,19 +503,18 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
      */
     private String computeMoves() {
         String faceletString = "";
-        for(String str : facelets) {
+        for (String str : facelets) {
             faceletString += str;
         }
         int code = Tools.verify(faceletString);
         //XXX
         Log.i(TAG, "verify code=" + code);
-        if(code == 0) {
-            String moves = Search.solution(faceletString, 21, 5, false);
+        if (code == 0) {
+            String moves = new JaapsSolver().solveByFacelets(faceletString);
             //XXX
             Log.i(TAG, "moves=" + moves);
             return moves;
-        }
-        else {
+        } else {
             return null;
         }
     }

@@ -133,22 +133,22 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
             public void handleMessage(Message msg) {
                 switch(msg.what) {
                     case PhotoActivity.MSG_FACE_U:
-                        showFacePicture((ImageView)findViewById(R.id.face_U), (Bitmap)msg.obj, 90);
+                        showFacePicture((ImageView)findViewById(R.id.face_U), (Bitmap)msg.obj, 90);//(90 + msg.arg1));
                         break;
                     case PhotoActivity.MSG_FACE_F:
-                        showFacePicture((ImageView)findViewById(R.id.face_F), (Bitmap)msg.obj, 90);
+                        showFacePicture((ImageView)findViewById(R.id.face_F), (Bitmap)msg.obj, 90);//(90 + msg.arg1));
                         break;
                     case PhotoActivity.MSG_FACE_D:
-                        showFacePicture((ImageView)findViewById(R.id.face_D), (Bitmap)msg.obj, 90);
+                        showFacePicture((ImageView)findViewById(R.id.face_D), (Bitmap)msg.obj, 90);//(90 + msg.arg1));
                         break;
                     case PhotoActivity.MSG_FACE_B:
-                        showFacePicture((ImageView)findViewById(R.id.face_B), (Bitmap)msg.obj,-90);
+                        showFacePicture((ImageView)findViewById(R.id.face_B), (Bitmap)msg.obj, -90);//(-90 + msg.arg1));
                         break;
                     case PhotoActivity.MSG_FACE_L:
-                        showFacePicture((ImageView)findViewById(R.id.face_L), (Bitmap)msg.obj,0);
+                        showFacePicture((ImageView)findViewById(R.id.face_L), (Bitmap)msg.obj, 0);//msg.arg1);
                         break;
                     case PhotoActivity.MSG_FACE_R:
-                        showFacePicture((ImageView)findViewById(R.id.face_R), (Bitmap)msg.obj,0);
+                        showFacePicture((ImageView)findViewById(R.id.face_R), (Bitmap)msg.obj, 0);//msg.arg1);
                         break;
                     case PhotoActivity.MSG_FACE_DETECT_FAIL:
                         showMessageOnScreen((String)msg.obj);
