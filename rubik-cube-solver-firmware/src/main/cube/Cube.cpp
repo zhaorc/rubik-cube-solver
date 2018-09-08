@@ -208,7 +208,7 @@ void Cube::release() {
 void Cube::rotate(int degree) {
     long steps = this->_rotateStepper->getSteps();
     if (this->_isHold) {
-        int fix = degree > 0 ? this->ROTATE_FIX_CLOCKWISE : -this->ROTATE_FIX_COUNTERCLOCKWISE;
+        int fix = degree > 0 ? this->ROTATE_FIX_0 : -this->ROTATE_FIX_0;
         this->_rotateStepper->run(steps * ((float) (degree + fix) / 360.0));
         this->sleep();
         this->_rotateStepper->run(steps * ((float) (-fix) / 360.0));
