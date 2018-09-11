@@ -82,25 +82,7 @@ public class TrainDataUtil {
     public void saveFace(Bitmap bitmap, RubikFacelet[][] rubikFacelets) {
         String prefix = String.valueOf(System.currentTimeMillis());
         //原始文件
-        FileOutputStream originalOuts = null;
-        try {
-            //原始图片
-            originalOuts = new FileOutputStream(String.format("%s/train/%s_original.jpg", TrainDataUtil.PATH, prefix));
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, originalOuts);
-            //face
-        }
-        catch(Exception exp) {
-            Log.e(TAG, exp.getMessage(), exp);
-        }
-        finally {
-            try{
-                if(originalOuts != null) {
-                    originalOuts.close();
-                }
-            }
-            catch(Exception exp) {
-            }
-        }
+        this.saveOriginalImage(bitmap, prefix);
         //face
         this.saveSubImage(bitmap, rubikFacelets[0][0].corners()[0],
                                   rubikFacelets[0][2].corners()[1],
@@ -119,6 +101,31 @@ public class TrainDataUtil {
         }
         // TODO detect info
         // TODO datafile
+    }
+
+    /**
+     *
+     * @param bitmap
+     * @param filenamePrefix
+     */
+    private void saveOriginalImage(Bitmap bitmap, String filenamePrefix) {
+        FileOutputStream originalOuts = null;
+        try {
+            originalOuts = new FileOutputStream(String.format("%s/train/%s_original.jpg", TrainDataUtil.PATH, filenamePrefix));
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, originalOuts);
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+        finally {
+            try{
+                if(originalOuts != null) {
+                    originalOuts.close();
+                }
+            }
+            catch(Exception exp) {
+            }
+        }
     }
 
     /**
@@ -144,6 +151,7 @@ public class TrainDataUtil {
         FileOutputStream fout = null;
         try {
             fout = new FileOutputStream(String.format("%s/train/%s_%s.jpg", TrainDataUtil.PATH, filenamePrefix, filenameSufix));
+            // TODO 统一图片尺寸
             sub.compress(Bitmap.CompressFormat.JPEG, 100, fout);
         }
         catch(Exception exp) {
