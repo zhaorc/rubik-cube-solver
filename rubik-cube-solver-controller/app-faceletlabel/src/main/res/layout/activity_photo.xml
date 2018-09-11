@@ -42,75 +42,16 @@
             android:layout_height="match_parent" >
 
             <ImageView
-                android:id="@+id/face_U"
+                android:id="@+id/facelet"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
                 android:layout_weight="1"
+                android:layout_marginLeft="55pt"
+                android:layout_marginRight="55pt"
                 android:scaleType="centerCrop"
                 android:background="#ffff00" />
-            <ImageView
-                android:id="@+id/face_F"
-                android:layout_weight="1"
-                android:background="#ff0000"
-                android:layout_gravity="center"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:scaleType="centerCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-            <ImageView
-                android:id="@+id/face_D"
-                android:layout_weight="1"
-                android:background="#ffffff"
-                android:layout_gravity="center"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:scaleType="centerCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
         </LinearLayout>
-        <LinearLayout
-            android:layout_weight="1"
-            android:background="#000000"
-            android:layout_gravity="center"
-            android:scaleType="centerCrop"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-            <ImageView
-                android:id="@+id/face_B"
-                android:layout_weight="1"
-                android:background="#ffa500"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:layout_gravity="center"
-                android:scaleType="centerCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-            <ImageView
-                android:id="@+id/face_L"
-                android:layout_weight="1"
-                android:background="#0000ff"
-                android:layout_gravity="center"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:scaleType="centerCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-            <ImageView
-                android:id="@+id/face_R"
-                android:layout_weight="1"
-                android:background="#00ff00"
-                android:layout_gravity="center"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:scaleType="centerCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-        </LinearLayout>
-
     </LinearLayout>
 </LinearLayout>
 </LinearLayout>

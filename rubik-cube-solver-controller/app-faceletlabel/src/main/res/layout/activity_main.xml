@@ -11,13 +11,12 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="40dp"
-        android:background="@android:color/darker_gray"
+        android:background="#4db65f"
         android:padding="10dp"
         android:text="采  集"
         android:textColor="#000000"
         android:textSize="18dp"
-        android:textStyle="bold"
-        android:enabled="false"/>
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/button_label"
