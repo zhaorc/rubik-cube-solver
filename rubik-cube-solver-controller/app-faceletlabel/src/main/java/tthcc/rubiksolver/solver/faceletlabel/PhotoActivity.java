@@ -25,6 +25,7 @@ import tthcc.rubiksolver.solver.faceletlabel.camera.ProcessingThread;
 
 public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Callback {
     private final String TAG = PhotoActivity.class.getSimpleName();
+    public static final int MSG_COUNT_SAMPLES = 5;
     public static final int MSG_FACE_DETECT_SUCESS = 6;
     private static final int MSG_DETECT_NEXT_FACE = 7;
 
@@ -35,6 +36,7 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     private Handler handler;
     private TextView sampleNumTextView;
     private Stopwatch stopwatch = new Stopwatch();
+    private int sampleNum = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -98,6 +100,7 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         }
         catch(Exception exp){
         }
+        this.processingThread.performCountSamples();
         this.processingThread.performDetectFace();
     }
 
@@ -120,6 +123,10 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
                     case PhotoActivity.MSG_DETECT_NEXT_FACE:
                         detectNextface();
                         break;
+                    case PhotoActivity.MSG_COUNT_SAMPLES:
+                        sampleNum = (Integer)msg.obj;
+                        showSampleNum();
+                        break;
                     default:
                         super.handleMessage(msg);
                 }
@@ -141,6 +148,9 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
                 bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
             }
             imageView.setImageBitmap(bitmap);
+            this.sampleNum++;
+            this.sampleNumTextView.setVisibility(View.VISIBLE);
+            this.sampleNumTextView.setText(String.valueOf(sampleNum));
             this.stopwatch.startWatch();
         }
         catch(Exception exp) {
@@ -155,6 +165,14 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         ImageView imageView = this.findViewById(R.id.facelet);
         imageView.setImageBitmap(null);
         this.processingThread.performDetectFace();
+    }
+
+    /**
+     *
+     */
+    private void showSampleNum() {
+        this.sampleNumTextView.setVisibility(View.VISIBLE);
+        this.sampleNumTextView.setText(String.valueOf(sampleNum));
     }
 
     /**

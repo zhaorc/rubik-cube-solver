@@ -17,6 +17,7 @@ import com.catalinjurjiu.rubikdetector.model.RubikFacelet;
 import java.nio.ByteBuffer;
 
 import tthcc.rubiksolver.solver.faceletlabel.PhotoActivity;
+import tthcc.rubiksolver.solver.faceletlabel.traindata.TrainDataUtil;
 
 public class ProcessingThread extends HandlerThread implements Camera.PreviewCallback {
 
@@ -44,6 +45,8 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     private int detectedTimes = 0;
     private boolean faceDetacted = true;
 
+    private TrainDataUtil trainDataUtil = new TrainDataUtil();
+
     /**
      * @param name
      * @param surfaceHolder
@@ -56,6 +59,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.frontendHandler = frontendHandler;
         this.cameraPreviewWidth = cameraPreviewWidth;
         this.cameraPreviewHeight = cameraPreviewHeight;
+        this.trainDataUtil.setup();
     }
 
     /**
@@ -83,6 +87,10 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.backgroundHandler.sendEmptyMessage(ProcessingThread.MSG_DETECT_FACE);
     }
 
+    public void performCountSamples() {
+        this.backgroundHandler.sendEmptyMessage(PhotoActivity.MSG_COUNT_SAMPLES);
+    }
+
     @Override
     protected void onLooperPrepared() {
         super.onLooperPrepared();
@@ -101,6 +109,9 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                         break;
                     case MSG_DETECT_FACE:
                         detectFace();
+                        break;
+                    case PhotoActivity.MSG_COUNT_SAMPLES:
+                        countSamples();
                         break;
                 }
             }
@@ -161,7 +172,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         //RubikDetector
         this.rubikDetector = new RubikDetector.Builder()
                 .debuggable(false)
-                .drawConfig(DrawConfig.FilledCircles())
+                .drawConfig(DrawConfig.DoNotDraw())
                 .inputFrameSize(this.cameraPreviewWidth, this.cameraPreviewHeight)
                 .inputFrameFormat(RubikDetectorUtils.convertAndroidImageFormat(ProcessingThread.PreviewFormat))
                 .build();
@@ -215,6 +226,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 this.cleanupLock.notify();
                 Log.d(TAG, "processing thread inside cleanup sync area, cleanup performed, after notify.");
             }
+            this.trainDataUtil.destroy();
         }
         Log.d(TAG, "processing thread inside cleanup sync area, cleanup performed, after sync area.");
     }
@@ -225,6 +237,12 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     private void detectFace() {
         this.faceDetacted = false;
         this.detectedTimes = 0;
+    }
+
+    private void countSamples() {
+        int num = this.trainDataUtil.getDataSize();
+        Message message = this.frontendHandler.obtainMessage(PhotoActivity.MSG_COUNT_SAMPLES, num);
+        message.sendToTarget();
     }
 
     /**
@@ -248,6 +266,8 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 // send to UI
                 Message resultMessage = this.frontendHandler.obtainMessage(PhotoActivity.MSG_FACE_DETECT_SUCESS, photoBitmap);
                 resultMessage.sendToTarget();
+                //save
+                this.trainDataUtil.saveFace(photoBitmap, facelets);
             } catch (Exception exp) {
                 Log.e(TAG, exp.getMessage(), exp);
             }
