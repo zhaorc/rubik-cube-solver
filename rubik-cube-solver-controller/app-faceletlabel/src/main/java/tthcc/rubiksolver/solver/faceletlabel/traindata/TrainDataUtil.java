@@ -7,12 +7,14 @@ import android.util.Log;
 import com.alibaba.fastjson.JSONObject;
 import com.catalinjurjiu.rubikdetector.model.Point2d;
 import com.catalinjurjiu.rubikdetector.model.RubikFacelet;
+import com.google.common.collect.Lists;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.List;
 
 /**
  * 样本读写工具<br>
@@ -25,9 +27,9 @@ import java.io.FileWriter;
  *         |     |---{timestamp}_facelet_{n}.jpg  --  第n魔方方块切割图片
  *         |     |---{timestamp}_info.txt         -- 魔方在原始图片中的位置信息
  *         |
- *         |---data_facelet.txt
- *         |---label_facelet.txt
- *         |---data_face.txt
+ *         |---data_facelet.txt     -- 魔方facelet数据集
+ *         |---label_facelet.txt    -- 魔方facelet标签
+ *         |---data_face.txt        -- 魔方face数据集
  *
  *
  *     </pre>
@@ -42,10 +44,14 @@ public class TrainDataUtil {
     private FileWriter dataFaceWriter = null;
     private FileWriter dataOriginalWriter = null;
 
+    private FileWriter dataLabelWriter = null;
+    private BufferedReader dataFaceletReader = null;
+    private String currentItem = null;
+
     /**
      *
      */
-    public void setup() {
+    public void init() {
         try{
             File dir = new File(TrainDataUtil.PATH + "/train");
             if(!dir.exists()) {
@@ -78,6 +84,47 @@ public class TrainDataUtil {
     /**
      *
      */
+    public void initLable() {
+        try{
+            // label file
+            File labelFile = new File(TrainDataUtil.PATH + "/label_facelet.txt");
+            if(!labelFile.exists()) {
+                labelFile.createNewFile();
+            }
+            this.dataLabelWriter = new FileWriter(labelFile, true);
+            //读取第一个待标记的数据项
+            //已标记的数据项
+            List<String> labledItemList = Lists.newArrayList();
+            BufferedReader labledItemReader = new BufferedReader(new FileReader(labelFile));
+            //全部数据集
+            this.dataFaceletReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/data_facelet.txt"));
+            String line;
+            try {
+                while((line = labledItemReader.readLine()) != null) {
+                    if(line.length() > 0) {
+                        labledItemList.add(line);
+                    }
+                }
+                while((this.currentItem = this.dataFaceletReader.readLine()) != null) {
+                    if(this.currentItem.length() > 0 && !labledItemList.contains(this.currentItem)) {
+                        break;
+                    }
+                }
+            }
+            finally {
+                if(labledItemReader != null) {
+                    labledItemReader.close();
+                }
+            }
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+    }
+
+    /**
+     *
+     */
     public void destroy() {
        try{
            if(this.dataFaceletWriter != null) {
@@ -88,6 +135,12 @@ public class TrainDataUtil {
            }
            if(this.dataOriginalWriter != null) {
                this.dataOriginalWriter.close();
+           }
+           if(this.dataLabelWriter != null) {
+               this.dataLabelWriter.close();
+           }
+           if(this.dataFaceletReader != null) {
+               this.dataFaceletReader.close();
            }
        }
        catch(Exception exp) {
@@ -118,6 +171,60 @@ public class TrainDataUtil {
             try{
                 if(dataReader != null) {
                     dataReader.close();
+                }
+            }
+            catch(Exception exp) {
+                Log.e(TAG, exp.getMessage(), exp);
+            }
+        }
+        return size;
+    }
+
+    /**
+     *
+     * @return 0 - 已标记的数量, 1 - 总数据梁
+     */
+    public int[] getLabelSize() {
+        int[] size = new int[2];
+        BufferedReader dataReader = null;
+        BufferedReader labelReader = null;
+        BufferedReader removedReader = null;
+        try{
+            int dataSize = 0;
+            int labeledSize = 0;
+            int removedSize = 0;
+            String line = null;
+            while((line = dataReader.readLine()) != null) {
+                if(line.length() > 0) {
+                    dataSize++;
+                }
+            }
+            while((line = labelReader.readLine()) != null) {
+                if(line.length() > 0) {
+                    labeledSize++;
+                }
+            }
+            while((line = removedReader.readLine()) != null) {
+                if(line.length() > 0) {
+                    removedSize++;
+                }
+            }
+            size[0] = labeledSize;
+            size[1] = dataSize - removedSize;
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+        finally {
+            try {
+                if(dataReader != null) {
+                    dataReader.close();
+                }
+                if(labelReader != null) {
+                    labelReader.close();
+                }
+                if(removedReader != null) {
+                    removedReader.close();
                 }
             }
             catch(Exception exp) {
@@ -285,4 +392,36 @@ public class TrainDataUtil {
             Log.e(TAG, exp.getMessage(), exp);
         }
     }
+
+    /**
+     * 将数据项item搭上label标签
+     * @param item
+     * @param label
+     */
+    public String markAsLabelAndGetNext(String item, String label) {
+        try {
+            dataLabelWriter.write(String.format("%s,%s%s", item, label, "\r\n"));
+            dataLabelWriter.flush();
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+        return this.getNextItem();
+    }
+
+    /**
+     *
+     * @return
+     */
+    private String getNextItem() {
+       String item = this.currentItem;
+       try{
+           this.currentItem = this.dataFaceletReader.readLine();
+       }
+       catch(Exception exp) {
+           Log.e(TAG, exp.getMessage(), exp);
+       }
+       return item;
+    }
+
 }

@@ -59,7 +59,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.frontendHandler = frontendHandler;
         this.cameraPreviewWidth = cameraPreviewWidth;
         this.cameraPreviewHeight = cameraPreviewHeight;
-        this.trainDataUtil.setup();
+        this.trainDataUtil.init();
     }
 
     /**
