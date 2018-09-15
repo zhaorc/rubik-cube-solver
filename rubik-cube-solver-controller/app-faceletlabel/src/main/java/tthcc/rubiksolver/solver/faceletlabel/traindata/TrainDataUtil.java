@@ -251,22 +251,16 @@ public class TrainDataUtil {
         //XXX
         Log.i(TAG, "angle=" + rubikFacelets[0][0].angle);
         //face
-        this.saveSubImage(bitmap, rubikFacelets[0][0].corners()[1],
-                                  rubikFacelets[0][2].corners()[2],
-                                  rubikFacelets[2][0].corners()[0],
-                                  rubikFacelets[2][2].corners()[3],
-                                  prefix, "face");
+        this.saveSubImage(bitmap, rubikFacelets[0][0], rubikFacelets[0][2], rubikFacelets[2][0], rubikFacelets[2][2],
+                          prefix, "face");
         //facelet
         for(int i=0; i<3; i++) {
             for(int j=0; j<3; j++) {
-                this.saveSubImage(bitmap, rubikFacelets[i][j].corners()[1],
-                        rubikFacelets[i][j].corners()[2],
-                        rubikFacelets[i][j].corners()[0],
-                        rubikFacelets[i][j].corners()[3],
+                this.saveSubImage(bitmap, rubikFacelets[i][j],
                         prefix, "facelet" +"_" + (i*3+j));
             }
         }
-        // Tdetect info
+        // detect info
         this.saveInfo(rubikFacelets, prefix);
         // data index file
         this.saveIndex(prefix);
@@ -297,53 +291,119 @@ public class TrainDataUtil {
         }
     }
 
-
+//    /**
+//     *
+//     * @param bitmap
+//     * @param topleft
+//     * @param topright
+//     * @param bottomleft
+//     * @param bottomright
+//     * @param filenamePrefix
+//     * @param filenameSufix
+//     */
+//    private void saveSubImage(Bitmap bitmap,
+//                              Point2d topleft, Point2d topright, Point2d bottomleft, Point2d bottomright,
+//                              String filenamePrefix, String filenameSufix) {
+//        int x1 = topleft.x < bottomleft.x ? (int) topleft.x : (int) bottomleft.x;
+//        int y1 = topleft.y < topright.y ? (int) topleft.y : (int) topright.y;
+//        int x2 = topright.x > bottomright.x ? (int) topright.x : (int) bottomright.x;
+//        int y2 = bottomleft.y > bottomright.y ? (int)bottomleft.y : (int)bottomright.y;
+//        x1 = x1 < 0 ? 0 : x1;
+//        x2 = x2 < 0 ? 0 : x2;
+//        y1 = y1 < 0 ? 0 : y1;
+//        y2 = y2 < 0 ? 0 : y2;
+//        if(x2 < x1) {
+//            // i do no know why
+//            int tmp = x1;
+//            x1 = x2;
+//            x2 = tmp;
+//            //XXX
+//            Log.i(TAG, "++++++++++++++++++");
+//        }
+//        if(y2 < y1) {
+//            // i do no know why
+//            int tmp = y1;
+//            y1 = y2;
+//            y2 = tmp;
+//            //XXX
+//            Log.i(TAG, "=================");
+//        }
+//        int w = x2 - x1;
+//        if(x1 + w > bitmap.getWidth()) {
+//            w = bitmap.getWidth() - x1;
+//        }
+//        int h = y2 - y1;
+//        if(y1 + h > bitmap.getHeight()) {
+//            h = bitmap.getHeight() - y1;
+//        }
+//
+////        //XXX
+////        Log.i(TAG, "x1=" + x1 + ", y1=" + y1);
+////        Log.i(TAG, "x2=" + x2 + ", y2=" + y2);
+////        Log.i(TAG, " w=" + w + ", h=" + h);
+//        int length = w > h ? w : h;
+//        int size = filenameSufix.startsWith("facelet") ? TrainDataUtil.FaceletWidth : TrainDataUtil.FaceWidth;
+//        float ratio = (1.0f*size) / (1.0f*length);
+//        Matrix matrix = new Matrix();
+//        matrix.preScale(ratio, ratio);
+//        Bitmap sub = Bitmap.createBitmap(bitmap, x1, y1, length, length, matrix, false);
+//
+//        FileOutputStream fout = null;
+//        try {
+//            fout = new FileOutputStream(String.format("%s/train/%s_%s.jpg", TrainDataUtil.PATH, filenamePrefix, filenameSufix));
+//            // TODO 统一图片尺寸
+//            sub.compress(Bitmap.CompressFormat.JPEG, 100, fout);
+//        }
+//        catch(Exception exp) {
+//            Log.e(TAG, exp.getMessage(), exp);
+//        }
+//        finally {
+//            try{
+//                if(fout != null) {
+//                    fout.close();
+//                }
+//            }
+//            catch (Exception exp) {
+//                Log.e(TAG, exp.getMessage(), exp);
+//            }
+//        }
+//    }
 
     /**
      *
      * @param bitmap
-     * @param topleft
-     * @param topright
-     * @param bottomleft
-     * @param bottomright
+     * @param facelet0
+     * @param facelet1
+     * @param facelet2
+     * @param facelet3
      * @param filenamePrefix
      * @param filenameSufix
      */
-    private void saveSubImage(Bitmap bitmap,
-                              Point2d topleft, Point2d topright, Point2d bottomleft, Point2d bottomright,
+    private void saveSubImage(Bitmap bitmap, RubikFacelet facelet0,
+                                             RubikFacelet facelet1,
+                                             RubikFacelet facelet2,
+                                             RubikFacelet facelet3,
                               String filenamePrefix, String filenameSufix) {
-        int x1 = topleft.x < bottomleft.x ? (int) topleft.x : (int) bottomleft.x;
-        int y1 = topleft.y < topright.y ? (int) topleft.y : (int) topright.y;
-        int x2 = topright.x > bottomright.x ? (int) topright.x : (int) bottomright.x;
-        int y2 = bottomleft.y > bottomright.y ? (int)bottomleft.y : (int)bottomright.y;
-        x1 = x1 < 0 ? 0 : x1;
-        x2 = x2 < 0 ? 0 : x2;
-        y1 = y1 < 0 ? 0 : y1;
-        y2 = y2 < 0 ? 0 : y2;
-        if(x2 < x1) {
-            // i do no know why
-            int tmp = x1;
-            x1 = x2;
-            x2 = tmp;
-            //XXX
-            Log.i(TAG, "++++++++++++++++++");
-        }
-        if(y2 < y1) {
-            // i do no know why
-            int tmp = y1;
-            y1 = y2;
-            y2 = tmp;
-            //XXX
-            Log.i(TAG, "=================");
-        }
+        int x1 = this.min(this.min(facelet0.corners()[0].x, facelet0.corners()[1].x, facelet0.corners()[2].x, facelet0.corners()[3].x),
+                          this.min(facelet1.corners()[0].x, facelet1.corners()[1].x, facelet1.corners()[2].x, facelet1.corners()[3].x),
+                          this.min(facelet2.corners()[0].x, facelet2.corners()[1].x, facelet2.corners()[2].x, facelet2.corners()[3].x),
+                          this.min(facelet3.corners()[0].x, facelet3.corners()[1].x, facelet3.corners()[2].x, facelet3.corners()[3].x));
+        int y1 = this.min(this.min(facelet0.corners()[0].y, facelet0.corners()[1].y, facelet0.corners()[2].y, facelet0.corners()[3].y),
+                          this.min(facelet1.corners()[0].y, facelet1.corners()[1].y, facelet1.corners()[2].y, facelet1.corners()[3].y),
+                          this.min(facelet2.corners()[0].y, facelet2.corners()[1].y, facelet2.corners()[2].y, facelet2.corners()[3].y),
+                          this.min(facelet3.corners()[0].y, facelet3.corners()[1].y, facelet3.corners()[2].y, facelet3.corners()[3].y));
+
+        int x2 = this.max(this.max(facelet0.corners()[0].x, facelet0.corners()[1].x, facelet0.corners()[2].x, facelet0.corners()[3].x),
+                          this.max(facelet1.corners()[0].x, facelet1.corners()[1].x, facelet1.corners()[2].x, facelet1.corners()[3].x),
+                          this.max(facelet2.corners()[0].x, facelet2.corners()[1].x, facelet2.corners()[2].x, facelet2.corners()[3].x),
+                          this.max(facelet3.corners()[0].x, facelet3.corners()[1].x, facelet3.corners()[2].x, facelet3.corners()[3].x));
+        int y2 = this.max(this.max(facelet0.corners()[0].y, facelet0.corners()[1].y, facelet0.corners()[2].y, facelet0.corners()[3].y),
+                          this.max(facelet1.corners()[0].y, facelet1.corners()[1].y, facelet1.corners()[2].y, facelet1.corners()[3].y),
+                          this.max(facelet2.corners()[0].y, facelet2.corners()[1].y, facelet2.corners()[2].y, facelet2.corners()[3].y),
+                          this.max(facelet3.corners()[0].y, facelet3.corners()[1].y, facelet3.corners()[2].y, facelet3.corners()[3].y));
+
         int w = x2 - x1;
-        if(x1 + w > bitmap.getWidth()) {
-            w = bitmap.getWidth() - x1;
-        }
         int h = y2 - y1;
-        if(y1 + h > bitmap.getHeight()) {
-            h = bitmap.getHeight() - y1;
-        }
 //        //XXX
 //        Log.i(TAG, "x1=" + x1 + ", y1=" + y1);
 //        Log.i(TAG, "x2=" + x2 + ", y2=" + y2);
@@ -375,6 +435,54 @@ public class TrainDataUtil {
             }
         }
     }
+
+    /**
+     *
+     * @param bitmap
+     * @param rubikFacelet
+     * @param filenamePrefix
+     * @param filenameSufix
+     */
+    private void saveSubImage(Bitmap bitmap, RubikFacelet rubikFacelet,
+                              String filenamePrefix, String filenameSufix) {
+        int x1 = this.min(rubikFacelet.corners()[0].x, rubikFacelet.corners()[1].x, rubikFacelet.corners()[2].x, rubikFacelet.corners()[3].x);
+        int y1 = this.min(rubikFacelet.corners()[0].y, rubikFacelet.corners()[1].y, rubikFacelet.corners()[2].y, rubikFacelet.corners()[3].y);
+        int x2 = this.max(rubikFacelet.corners()[0].x, rubikFacelet.corners()[1].x, rubikFacelet.corners()[2].x, rubikFacelet.corners()[3].x);
+        int y2 = this.max(rubikFacelet.corners()[0].y, rubikFacelet.corners()[1].y, rubikFacelet.corners()[2].y, rubikFacelet.corners()[3].y);
+        int w = x2 - x1;
+        int h = y2 - y1;
+//        //XXX
+//        Log.i(TAG, "x1=" + x1 + ", y1=" + y1);
+//        Log.i(TAG, "x2=" + x2 + ", y2=" + y2);
+//        Log.i(TAG, " w=" + w + ", h=" + h);
+        int length = w > h ? w : h;
+        int size = filenameSufix.startsWith("facelet") ? TrainDataUtil.FaceletWidth : TrainDataUtil.FaceWidth;
+        float ratio = (1.0f*size) / (1.0f*length);
+        Matrix matrix = new Matrix();
+        matrix.preScale(ratio, ratio);
+        Bitmap sub = Bitmap.createBitmap(bitmap, x1, y1, length, length, matrix, false);
+
+        FileOutputStream fout = null;
+        try {
+            fout = new FileOutputStream(String.format("%s/train/%s_%s.jpg", TrainDataUtil.PATH, filenamePrefix, filenameSufix));
+            // TODO 统一图片尺寸
+            sub.compress(Bitmap.CompressFormat.JPEG, 100, fout);
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+        finally {
+            try{
+                if(fout != null) {
+                    fout.close();
+                }
+            }
+            catch (Exception exp) {
+                Log.e(TAG, exp.getMessage(), exp);
+            }
+        }
+    }
+
 
     /**
      *
@@ -461,4 +569,38 @@ public class TrainDataUtil {
        return item;
     }
 
+    /**
+     *
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @return
+     */
+    private int min(float a, float b, float c, float d) {
+        float x = a;
+        x = x < b ? x : b;
+        x = x < c ? x : c;
+        x = x < d ? x : d;
+
+        return (int)x;
+    }
+
+    /**
+     *
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @return
+     */
+    private int max(float a, float b, float c, float d) {
+        float x = a;
+        x = x > a ? x : a;
+        x = x > b ? x : b;
+        x = x > c ? x : c;
+        x = x > d ? x : d;
+
+        return (int)x;
+    }
 }
