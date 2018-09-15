@@ -30,7 +30,7 @@ public class TrainDataFaceActivity extends AppCompatActivity {
         String originalFilename = TrainDataUtil.PATH + "/train/" + value[0] + "_original.jpg";
         Uri uri = Uri.fromFile(new File(originalFilename));
         ((ImageView)this.findViewById(R.id.original_data)).setImageURI(uri);
-        this.faceletName.setText(value[1] + "_" + value[2]);
+        this.faceletName.setText(value[1] + "_" + (Integer.valueOf(value[2]) + 1));
     }
 
     private void createTextViewOverlay() {

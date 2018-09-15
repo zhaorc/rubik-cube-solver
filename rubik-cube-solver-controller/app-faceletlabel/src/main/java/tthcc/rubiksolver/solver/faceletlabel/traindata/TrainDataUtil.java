@@ -102,12 +102,12 @@ public class TrainDataUtil {
             try {
                 while((line = labeledItemReader.readLine()) != null) {
                     if(line.length() > 0) {
-                        labeledItemList.add(line);
+                        String[] value = line.split(",");
+                        labeledItemList.add(value[0]);
                     }
                 }
                 while((this.currentItem = this.dataFaceletReader.readLine()) != null) {
-                    String[] item = this.currentItem.split(",");
-                    if(this.currentItem.length() > 0 && (item.length == 1 || !labeledItemList.contains(item[0]))) {
+                    if(this.currentItem.length() > 0 && !labeledItemList.contains(this.currentItem)) {
                         break;
                     }
                 }
