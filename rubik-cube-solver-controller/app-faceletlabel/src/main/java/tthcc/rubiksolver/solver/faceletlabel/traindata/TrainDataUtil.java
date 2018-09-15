@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class TrainDataUtil {
     private static final String TAG = TrainDataUtil.class.getSimpleName();
-    private static final String PATH = "/storage/emulated/0/rubiks-cube";
+    public static final String PATH = "/storage/emulated/0/rubiks-cube";
     private static final int FaceletWidth = 120;
     private static final int FaceWidth = 360;
     private FileWriter dataFaceletWriter = null;
@@ -84,7 +84,7 @@ public class TrainDataUtil {
     /**
      *
      */
-    public void initLable() {
+    public void initLabel() {
         try{
             // label file
             File labelFile = new File(TrainDataUtil.PATH + "/label_facelet.txt");
@@ -94,26 +94,27 @@ public class TrainDataUtil {
             this.dataLabelWriter = new FileWriter(labelFile, true);
             //读取第一个待标记的数据项
             //已标记的数据项
-            List<String> labledItemList = Lists.newArrayList();
-            BufferedReader labledItemReader = new BufferedReader(new FileReader(labelFile));
+            List<String> labeledItemList = Lists.newArrayList();
+            BufferedReader labeledItemReader = new BufferedReader(new FileReader(labelFile));
             //全部数据集
             this.dataFaceletReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/data_facelet.txt"));
             String line;
             try {
-                while((line = labledItemReader.readLine()) != null) {
+                while((line = labeledItemReader.readLine()) != null) {
                     if(line.length() > 0) {
-                        labledItemList.add(line);
+                        labeledItemList.add(line);
                     }
                 }
                 while((this.currentItem = this.dataFaceletReader.readLine()) != null) {
-                    if(this.currentItem.length() > 0 && !labledItemList.contains(this.currentItem)) {
+                    String[] item = this.currentItem.split(",");
+                    if(this.currentItem.length() > 0 && (item.length == 1 || !labeledItemList.contains(item[0]))) {
                         break;
                     }
                 }
             }
             finally {
-                if(labledItemReader != null) {
-                    labledItemReader.close();
+                if(labeledItemReader != null) {
+                    labeledItemReader.close();
                 }
             }
         }
@@ -188,29 +189,24 @@ public class TrainDataUtil {
         int[] size = new int[2];
         BufferedReader dataReader = null;
         BufferedReader labelReader = null;
-        BufferedReader removedReader = null;
         try{
             int dataSize = 0;
             int labeledSize = 0;
-            int removedSize = 0;
             String line = null;
+            dataReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/data_facelet.txt"));
             while((line = dataReader.readLine()) != null) {
                 if(line.length() > 0) {
                     dataSize++;
                 }
             }
+            labelReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/label_facelet.txt"));
             while((line = labelReader.readLine()) != null) {
                 if(line.length() > 0) {
                     labeledSize++;
                 }
             }
-            while((line = removedReader.readLine()) != null) {
-                if(line.length() > 0) {
-                    removedSize++;
-                }
-            }
             size[0] = labeledSize;
-            size[1] = dataSize - removedSize;
+            size[1] = dataSize;
         }
         catch(Exception exp) {
             Log.e(TAG, exp.getMessage(), exp);
@@ -222,9 +218,6 @@ public class TrainDataUtil {
                 }
                 if(labelReader != null) {
                     labelReader.close();
-                }
-                if(removedReader != null) {
-                    removedReader.close();
                 }
             }
             catch(Exception exp) {
@@ -413,7 +406,7 @@ public class TrainDataUtil {
      *
      * @return
      */
-    private String getNextItem() {
+    public String getNextItem() {
        String item = this.currentItem;
        try{
            this.currentItem = this.dataFaceletReader.readLine();

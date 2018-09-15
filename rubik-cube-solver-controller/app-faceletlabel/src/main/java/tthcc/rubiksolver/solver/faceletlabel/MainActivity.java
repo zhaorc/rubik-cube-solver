@@ -29,6 +29,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button lableButton = this.findViewById(R.id.button_label);
+        lableButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getBaseContext(), TrainDataLabelActivity.class));
+            }
+        });
+
         if (!this.isPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
                 !this.isPermissionGranted(Manifest.permission.CAMERA)) {
             ActivityCompat.requestPermissions(this,
