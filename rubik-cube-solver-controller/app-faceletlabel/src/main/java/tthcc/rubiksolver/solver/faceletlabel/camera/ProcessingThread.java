@@ -45,7 +45,6 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     private int detectedTimes = 0;
     private boolean faceDetacted = true;
 
-    private TrainDataUtil trainDataUtil = new TrainDataUtil();
 
     /**
      * @param name
@@ -59,7 +58,6 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
         this.frontendHandler = frontendHandler;
         this.cameraPreviewWidth = cameraPreviewWidth;
         this.cameraPreviewHeight = cameraPreviewHeight;
-        this.trainDataUtil.init();
     }
 
     /**
@@ -226,7 +224,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 this.cleanupLock.notify();
                 Log.d(TAG, "processing thread inside cleanup sync area, cleanup performed, after notify.");
             }
-            this.trainDataUtil.destroy();
+            TrainDataUtil.getInstance().destroy();
         }
         Log.d(TAG, "processing thread inside cleanup sync area, cleanup performed, after sync area.");
     }
@@ -240,7 +238,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
     }
 
     private void countSamples() {
-        int num = this.trainDataUtil.getDataSize();
+        int num = TrainDataUtil.getInstance().getDataSize();
         Message message = this.frontendHandler.obtainMessage(PhotoActivity.MSG_COUNT_SAMPLES, num);
         message.sendToTarget();
     }
@@ -267,7 +265,7 @@ public class ProcessingThread extends HandlerThread implements Camera.PreviewCal
                 Message resultMessage = this.frontendHandler.obtainMessage(PhotoActivity.MSG_FACE_DETECT_SUCESS, photoBitmap);
                 resultMessage.sendToTarget();
                 //save
-                this.trainDataUtil.saveFace(photoBitmap, facelets);
+                TrainDataUtil.getInstance().saveFace(photoBitmap, facelets);
             } catch (Exception exp) {
                 Log.e(TAG, exp.getMessage(), exp);
             }

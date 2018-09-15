@@ -48,6 +48,18 @@ public class TrainDataUtil {
     private BufferedReader dataFaceletReader = null;
     private String currentItem = null;
 
+    private static TrainDataUtil INSTANCE = new TrainDataUtil();
+
+    private TrainDataUtil(){};
+
+    /**
+     *
+     * @return
+     */
+    public static TrainDataUtil getInstance() {
+        return INSTANCE;
+    }
+
     /**
      *
      */
@@ -236,6 +248,8 @@ public class TrainDataUtil {
         String prefix = String.valueOf(System.currentTimeMillis());
         //原始文件
         this.saveOriginalImage(bitmap, prefix);
+        //XXX
+        Log.i(TAG, "angle=" + rubikFacelets[0][0].angle);
         //face
         this.saveSubImage(bitmap, rubikFacelets[0][0].corners()[1],
                                   rubikFacelets[0][2].corners()[2],
@@ -302,8 +316,38 @@ public class TrainDataUtil {
         int y1 = topleft.y < topright.y ? (int) topleft.y : (int) topright.y;
         int x2 = topright.x > bottomright.x ? (int) topright.x : (int) bottomright.x;
         int y2 = bottomleft.y > bottomright.y ? (int)bottomleft.y : (int)bottomright.y;
+        x1 = x1 < 0 ? 0 : x1;
+        x2 = x2 < 0 ? 0 : x2;
+        y1 = y1 < 0 ? 0 : y1;
+        y2 = y2 < 0 ? 0 : y2;
+        if(x2 < x1) {
+            // i do no know why
+            int tmp = x1;
+            x1 = x2;
+            x2 = tmp;
+            //XXX
+            Log.i(TAG, "++++++++++++++++++");
+        }
+        if(y2 < y1) {
+            // i do no know why
+            int tmp = y1;
+            y1 = y2;
+            y2 = tmp;
+            //XXX
+            Log.i(TAG, "=================");
+        }
         int w = x2 - x1;
+        if(x1 + w > bitmap.getWidth()) {
+            w = bitmap.getWidth() - x1;
+        }
         int h = y2 - y1;
+        if(y1 + h > bitmap.getHeight()) {
+            h = bitmap.getHeight() - y1;
+        }
+//        //XXX
+//        Log.i(TAG, "x1=" + x1 + ", y1=" + y1);
+//        Log.i(TAG, "x2=" + x2 + ", y2=" + y2);
+//        Log.i(TAG, " w=" + w + ", h=" + h);
         int length = w > h ? w : h;
         int size = filenameSufix.startsWith("facelet") ? TrainDataUtil.FaceletWidth : TrainDataUtil.FaceWidth;
         float ratio = (1.0f*size) / (1.0f*length);

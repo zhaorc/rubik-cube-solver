@@ -22,7 +22,6 @@ public class TrainDataLabelActivity extends AppCompatActivity {
     private int itemNum = 0;
     private int labeledNum = 0;
     private TextView labelNumView;
-    private TrainDataUtil trainDataUtil = new TrainDataUtil();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,14 +47,14 @@ public class TrainDataLabelActivity extends AppCompatActivity {
 
         this.createTextViewOverlay();
 
-        this.trainDataUtil.initLabel();
-        int[] size = this.trainDataUtil.getLabelSize();
+        TrainDataUtil.getInstance().initLabel();
+        int[] size = TrainDataUtil.getInstance().getLabelSize();
         this.labeledNum = size[0];
         this.itemNum = size[1];
 
         this.labelNumView.setText(String.format(" %s / %s", labeledNum, itemNum));
 
-        this.dataItem = this.trainDataUtil.getNextItem();
+        this.dataItem = TrainDataUtil.getInstance().getNextItem();
 
         this.showDateItem();
     }
@@ -116,7 +115,7 @@ public class TrainDataLabelActivity extends AppCompatActivity {
                 label = "X";
             }
             if(label != null) {
-                dataItem = trainDataUtil.markAsLabelAndGetNext(dataItem, label);
+                dataItem = TrainDataUtil.getInstance().markAsLabelAndGetNext(dataItem, label);
                 labeledNum++;
                 showDateItem();
                 labelNumView.setText(String.format(" %s / %s", labeledNum, itemNum));

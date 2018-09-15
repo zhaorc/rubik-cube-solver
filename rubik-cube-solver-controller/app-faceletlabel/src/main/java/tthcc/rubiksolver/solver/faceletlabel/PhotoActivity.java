@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import tthcc.rubiksolver.solver.faceletlabel.camera.ProcessingThread;
+import tthcc.rubiksolver.solver.faceletlabel.traindata.TrainDataUtil;
 
 
 public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Callback {
@@ -56,6 +57,12 @@ public class PhotoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         this.processingThread = new ProcessingThread(ProcessingThread.class.getSimpleName(), this.surfaceHolder, this.handler, this.DefaultPreviewWidth, this.DefaultPreviewHeight);
         this.processingThread.start();
         this.stopwatch.start();
+    }
+
+    @Override
+    protected  void onStart() {
+        super.onStart();
+        TrainDataUtil.getInstance().init();
     }
 
     @Override
