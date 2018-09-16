@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 /**
@@ -44,9 +45,12 @@ public class TrainDataUtil {
     private FileWriter dataFaceWriter = null;
     private FileWriter dataOriginalWriter = null;
 
-    private FileWriter dataLabelWriter = null;
-    private BufferedReader dataFaceletReader = null;
+    private RandomAccessFile dataLabelFile = null;
+    private RandomAccessFile dataFaceletFile = null;
+    private RandomAccessFile bookmarkFile = null;
     private String currentItem = null;
+    private String bookmark = null;
+    private int labeledNum = 0;
 
     private static TrainDataUtil INSTANCE = new TrainDataUtil();
 
@@ -98,36 +102,34 @@ public class TrainDataUtil {
      */
     public void initLabel() {
         try{
+            // bookmark
+            File bkfile = new File(TrainDataUtil.PATH + "/label_bookmark.txt");
+            if(!bkfile.exists()) {
+                bkfile.createNewFile();
+            }
+            this.bookmarkFile = new RandomAccessFile(bkfile, "rw");
             // label file
             File labelFile = new File(TrainDataUtil.PATH + "/label_facelet.txt");
             if(!labelFile.exists()) {
                 labelFile.createNewFile();
             }
-            this.dataLabelWriter = new FileWriter(labelFile, true);
-            //读取第一个待标记的数据项
-            //已标记的数据项
-            List<String> labeledItemList = Lists.newArrayList();
-            BufferedReader labeledItemReader = new BufferedReader(new FileReader(labelFile));
-            //全部数据集
-            this.dataFaceletReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/data_facelet.txt"));
-            String line;
-            try {
-                while((line = labeledItemReader.readLine()) != null) {
-                    if(line.length() > 0) {
-                        String[] value = line.split(",");
-                        labeledItemList.add(value[0]);
-                    }
-                }
-                while((this.currentItem = this.dataFaceletReader.readLine()) != null) {
-                    if(this.currentItem.length() > 0 && !labeledItemList.contains(this.currentItem)) {
+            this.dataFaceletFile = new RandomAccessFile(TrainDataUtil.PATH + "/data_facelet.txt", "r");
+            this.dataLabelFile = new RandomAccessFile(labelFile,"rw");
+            // 读取bookmark
+            this.bookmark = this.bookmarkFile.readLine();
+            // 数据集和标签文件定位到bookmark位置
+            this.labeledNum = 0;
+            if(this.bookmark != null) {
+                String line;
+                while ((line = this.dataFaceletFile.readLine()) != null) {
+                    this.labeledNum++;
+                    if (line.equals(this.bookmark)) {
+                        this.labeledNum--;
+                        this.dataFaceletFile.seek(this.dataFaceletFile.getFilePointer() - line.length() - 2);
                         break;
                     }
                 }
-            }
-            finally {
-                if(labeledItemReader != null) {
-                    labeledItemReader.close();
-                }
+                this.dataLabelFile.seek((line.length() + 4) * labeledNum);
             }
         }
         catch(Exception exp) {
@@ -149,11 +151,23 @@ public class TrainDataUtil {
            if(this.dataOriginalWriter != null) {
                this.dataOriginalWriter.close();
            }
-           if(this.dataLabelWriter != null) {
-               this.dataLabelWriter.close();
+           if(this.dataFaceletFile != null) {
+               this.dataFaceletFile.close();
            }
-           if(this.dataFaceletReader != null) {
-               this.dataFaceletReader.close();
+           if(this.dataLabelFile != null) {
+               this.dataLabelFile.close();
+           }
+           //XXX
+           Log.i(TAG, "this.bookmark=" + this.bookmark);
+           if(this.bookmarkFile != null) {
+               if(this.bookmark == null) {
+                   this.bookmarkFile.close();
+               }
+               else {
+                   this.bookmarkFile.seek(0);
+                   this.bookmarkFile.writeBytes(this.bookmark);
+                   this.bookmarkFile.close();
+               }
            }
        }
        catch(Exception exp) {
@@ -203,21 +217,14 @@ public class TrainDataUtil {
         BufferedReader labelReader = null;
         try{
             int dataSize = 0;
-            int labeledSize = 0;
-            String line = null;
+            String line;
             dataReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/data_facelet.txt"));
             while((line = dataReader.readLine()) != null) {
                 if(line.length() > 0) {
                     dataSize++;
                 }
             }
-            labelReader = new BufferedReader(new FileReader(TrainDataUtil.PATH + "/label_facelet.txt"));
-            while((line = labelReader.readLine()) != null) {
-                if(line.length() > 0) {
-                    labeledSize++;
-                }
-            }
-            size[0] = labeledSize;
+            size[0] = this.labeledNum;
             size[1] = dataSize;
         }
         catch(Exception exp) {
@@ -290,84 +297,6 @@ public class TrainDataUtil {
             }
         }
     }
-
-//    /**
-//     *
-//     * @param bitmap
-//     * @param topleft
-//     * @param topright
-//     * @param bottomleft
-//     * @param bottomright
-//     * @param filenamePrefix
-//     * @param filenameSufix
-//     */
-//    private void saveSubImage(Bitmap bitmap,
-//                              Point2d topleft, Point2d topright, Point2d bottomleft, Point2d bottomright,
-//                              String filenamePrefix, String filenameSufix) {
-//        int x1 = topleft.x < bottomleft.x ? (int) topleft.x : (int) bottomleft.x;
-//        int y1 = topleft.y < topright.y ? (int) topleft.y : (int) topright.y;
-//        int x2 = topright.x > bottomright.x ? (int) topright.x : (int) bottomright.x;
-//        int y2 = bottomleft.y > bottomright.y ? (int)bottomleft.y : (int)bottomright.y;
-//        x1 = x1 < 0 ? 0 : x1;
-//        x2 = x2 < 0 ? 0 : x2;
-//        y1 = y1 < 0 ? 0 : y1;
-//        y2 = y2 < 0 ? 0 : y2;
-//        if(x2 < x1) {
-//            // i do no know why
-//            int tmp = x1;
-//            x1 = x2;
-//            x2 = tmp;
-//            //XXX
-//            Log.i(TAG, "++++++++++++++++++");
-//        }
-//        if(y2 < y1) {
-//            // i do no know why
-//            int tmp = y1;
-//            y1 = y2;
-//            y2 = tmp;
-//            //XXX
-//            Log.i(TAG, "=================");
-//        }
-//        int w = x2 - x1;
-//        if(x1 + w > bitmap.getWidth()) {
-//            w = bitmap.getWidth() - x1;
-//        }
-//        int h = y2 - y1;
-//        if(y1 + h > bitmap.getHeight()) {
-//            h = bitmap.getHeight() - y1;
-//        }
-//
-////        //XXX
-////        Log.i(TAG, "x1=" + x1 + ", y1=" + y1);
-////        Log.i(TAG, "x2=" + x2 + ", y2=" + y2);
-////        Log.i(TAG, " w=" + w + ", h=" + h);
-//        int length = w > h ? w : h;
-//        int size = filenameSufix.startsWith("facelet") ? TrainDataUtil.FaceletWidth : TrainDataUtil.FaceWidth;
-//        float ratio = (1.0f*size) / (1.0f*length);
-//        Matrix matrix = new Matrix();
-//        matrix.preScale(ratio, ratio);
-//        Bitmap sub = Bitmap.createBitmap(bitmap, x1, y1, length, length, matrix, false);
-//
-//        FileOutputStream fout = null;
-//        try {
-//            fout = new FileOutputStream(String.format("%s/train/%s_%s.jpg", TrainDataUtil.PATH, filenamePrefix, filenameSufix));
-//            // TODO 统一图片尺寸
-//            sub.compress(Bitmap.CompressFormat.JPEG, 100, fout);
-//        }
-//        catch(Exception exp) {
-//            Log.e(TAG, exp.getMessage(), exp);
-//        }
-//        finally {
-//            try{
-//                if(fout != null) {
-//                    fout.close();
-//                }
-//            }
-//            catch (Exception exp) {
-//                Log.e(TAG, exp.getMessage(), exp);
-//            }
-//        }
-//    }
 
     /**
      *
@@ -539,14 +468,13 @@ public class TrainDataUtil {
     }
 
     /**
-     * 将数据项item搭上label标签
+     * 将数据项item打上label标签
      * @param item
      * @param label
      */
-    public String markAsLabelAndGetNext(String item, String label) {
+    public String[] markAsLabelAndGetNext(String item, String label) {
         try {
-            dataLabelWriter.write(String.format("%s,%s%s", item, label, "\r\n"));
-            dataLabelWriter.flush();
+            this.dataLabelFile.writeBytes(String.format("%s,%s%s", item, label, "\r\n"));
         }
         catch(Exception exp) {
             Log.e(TAG, exp.getMessage(), exp);
@@ -558,15 +486,71 @@ public class TrainDataUtil {
      *
      * @return
      */
-    public String getNextItem() {
-       String item = this.currentItem;
+    public String[] getNextItem() {
+        String[] value = new String[2];
        try{
-           this.currentItem = this.dataFaceletReader.readLine();
+           this.currentItem = this.dataFaceletFile.readLine();
+           // 已标记的标签
+           String line = this.dataLabelFile.readLine();
+           if(line != null) {
+               value[1] = line.split(",")[1];
+               this.dataLabelFile.seek(this.dataLabelFile.getFilePointer() - line.length() - 2);
+           }
+           else {
+               value[1] = "";
+           }
        }
        catch(Exception exp) {
            Log.e(TAG, exp.getMessage(), exp);
        }
-       return item;
+       this.bookmark = this.currentItem;
+       value[0] = this.currentItem;
+       return value;
+    }
+
+    /**
+     *
+     * @param item
+     * @param label
+     * @return
+     */
+    public String[] markAsLabelAndGetPrevious(String item, String label) {
+        try {
+            this.dataLabelFile.writeBytes(String.format("%s,%s%s", item, label, "\r\n"));
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+
+        return this.getPreviousItem();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String[] getPreviousItem() {
+        String[] value = new String[2];
+        int size = this.currentItem.length();
+        try{
+            // 数据集文件指针
+            long pos = this.dataFaceletFile.getFilePointer();
+            this.dataFaceletFile.seek(pos - (size + 2) * 2);
+            this.currentItem = this.dataFaceletFile.readLine();
+            // 标签文件指针
+            pos = this.dataLabelFile.getFilePointer();
+            this.dataLabelFile.seek(pos - (size  + 4) * 2);
+            // 已标记的标签
+            String line = this.dataLabelFile.readLine();
+            value[1] = line.split(",")[1];
+            this.dataLabelFile.seek(this.dataLabelFile.getFilePointer() - line.length() - 2);
+        }
+        catch(Exception exp) {
+            Log.e(TAG, exp.getMessage(), exp);
+        }
+        this.bookmark = this.currentItem;
+        value[0] = this.currentItem;
+        return value;
     }
 
     /**
