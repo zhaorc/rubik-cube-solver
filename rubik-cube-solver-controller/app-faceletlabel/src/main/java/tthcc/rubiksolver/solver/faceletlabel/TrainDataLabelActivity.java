@@ -119,7 +119,7 @@ public class TrainDataLabelActivity extends AppCompatActivity {
             ((ImageView) this.findViewById(R.id.face_X)).getDrawable().mutate().setAlpha(50);
         }
         else {
-            ((ImageView) this.findViewById(R.id.face_X)).getDrawable().mutate().setAlpha(100);
+            ((ImageView) this.findViewById(R.id.face_X)).getDrawable().mutate().setAlpha(255);
         }
         Uri uri = Uri.fromFile(new File(TrainDataUtil.PATH + "/train/" + value[0] + ".jpg"));
         ((ImageView)this.findViewById(R.id.face_data)).setImageURI(uri);
